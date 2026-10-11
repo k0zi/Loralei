@@ -1,0 +1,9 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Loralei.Gui.ViewModels"
+             xmlns:resizer="using:Loralei.ImageResizer.Views"
+             x:Class="Loralei.Gui.Views.ResizeView"
+             x:DataType="vm:ResizeViewModel">
+  <!-- The resizer brings its own view and view model; this page only hands one to the other. -->
+  <resizer:MainView DataContext="{Binding Resizer}" />
+</UserControl>

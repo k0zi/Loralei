@@ -1,0 +1,25 @@
+<Project>
+
+  <!--
+    Avalonia ships a build-time telemetry collector (the Avalonia.BuildServices package, a
+    transitive dependency of Avalonia itself). Its AvaloniaStats target runs before
+    CoreCompile and posts anonymised build metadata - hashed project and machine name, a
+    machine GUID, OS, Avalonia version, IDE - to Avalonia's servers.
+
+    It is build-time only and collects no source, no file paths and nothing from a running
+    app, so it never sees a dataset or a trained adapter. It is disabled here anyway,
+    because this project is offline by design: loralei itself opens no connection outside
+    `models pull`, and a build of its GUI should not either.
+
+    Avalonia's documented opt-out is the AVALONIA_TELEMETRY_OPTOUT=1 environment variable,
+    which depends on every shell and IDE that ever builds this remembering to set it.
+    Overriding the target makes it a property of the repository instead. Setting the
+    environment variable as well does no harm.
+
+    If an Avalonia upgrade renames this target, the override silently stops applying - so
+    the check is `cd gui && dotnet build -t:Rebuild` under strace, expecting no outbound
+    connection. See README.md, "Privacy".
+  -->
+  <Target Name="AvaloniaStats" />
+
+</Project>

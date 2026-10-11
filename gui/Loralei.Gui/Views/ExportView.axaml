@@ -1,0 +1,56 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Loralei.Gui.ViewModels"
+             xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="Loralei.Gui.Views.ExportView"
+             x:DataType="vm:ExportViewModel">
+  <StackPanel Spacing="12">
+
+    <WrapPanel>
+      <StackPanel Classes="field" MinWidth="220">
+        <TextBlock Classes="fieldLabel" Text="Run" />
+        <ComboBox ItemsSource="{Binding Runs}" SelectedItem="{Binding Run}" MinWidth="220" />
+      </StackPanel>
+      <StackPanel Classes="field">
+        <TextBlock Classes="fieldLabel" Text="Format" />
+        <ComboBox ItemsSource="{Binding FormatOptions}" SelectedItem="{Binding Format}" MinWidth="150" />
+      </StackPanel>
+      <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Bottom" Margin="0,0,0,10">
+        <Button  Command="{Binding RefreshCommand}" >
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <icons:MaterialIcon Kind="RefreshCircle" Width="15" Height="15" VerticalAlignment="Center" />
+          <TextBlock Text="Refresh" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+        <Button  Command="{Binding ExportCommand}" IsEnabled="{Binding !Shell.IsBusy}" >
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <icons:MaterialIcon Kind="FileExportOutline" Width="15" Height="15" VerticalAlignment="Center" />
+          <TextBlock Text="Export" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+      </StackPanel>
+    </WrapPanel>
+
+    <CheckBox Content="Verify by loading the result back" IsChecked="{Binding Verify}" />
+    <TextBlock Classes="subtle"
+               Text="Verification loads the whole base transformer on the CPU in bf16. It is slow and memory-hungry, and is skipped when the base model is not local." />
+
+    <Border Classes="panel" IsVisible="{Binding Produced.Count}">
+      <StackPanel>
+        <TextBlock Classes="fieldLabel" Text="adapters in the run directory" />
+        <ItemsControl ItemsSource="{Binding Produced}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <TextBlock Classes="mono" Text="{Binding}" Margin="0,2" />
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+    </Border>
+
+    <TextBlock Classes="subtle" Text="{Binding Status}"
+               IsVisible="{Binding Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+    <SelectableTextBlock Foreground="{DynamicResource FailBrush}" Text="{Binding Error}" TextWrapping="Wrap"
+                         IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+  </StackPanel>
+</UserControl>

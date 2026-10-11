@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <OutputType>Exe</OutputType>
+    <NoWarn>$(NoWarn);xUnit1051</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.9.0" />
+    <PackageReference Include="xunit.v3" Version="3.2.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+    <PackageReference Include="Avalonia.Headless.XUnit" Version="$(AvaloniaVersion)" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="../TestSupport/Png.cs" Link="Png.cs" />
+    <Compile Include="../TestSupport/CliLock.cs" Link="CliLock.cs" />
+    <Compile Include="../TestSupport/TempWorkspace.cs" Link="TempWorkspace.cs" />
+    <Compile Include="../TestSupport/StubEndpoint.cs" Link="StubEndpoint.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Loralei.Gui/Loralei.Gui.csproj" />
+  </ItemGroup>
+</Project>

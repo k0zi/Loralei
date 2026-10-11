@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- A library, not an app: Loralei.Gui hosts MainView as its Resize page and supplies the
+       Application, the window and the theme. -->
+  <PropertyGroup>
+    <!-- Compiled bindings turn binding-path typos into build errors instead of silent runtime no-ops. -->
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="$(AvaloniaVersion)" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="KD.Avalonia.Rice" Version="26.10.6" />
+    <PackageReference Include="SkiaSharp" Version="3.119.4" />
+  </ItemGroup>
+</Project>

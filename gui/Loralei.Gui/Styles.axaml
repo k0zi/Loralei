@@ -1,0 +1,101 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Styles.Resources>
+    <ResourceDictionary>
+      <!-- Everything theme-dependent lives in ThemeDictionaries so a live Light/Dark switch
+           repaints it. The consumers must bind with DynamicResource, not StaticResource -
+           StaticResource resolves once and would leave the old colours on screen. -->
+      <ResourceDictionary.ThemeDictionaries>
+
+        <ResourceDictionary x:Key="Dark">
+          <SolidColorBrush x:Key="OkBrush" Color="#4BB543" />
+          <SolidColorBrush x:Key="WarnBrush" Color="#D9A441" />
+          <SolidColorBrush x:Key="FailBrush" Color="#E5534B" />
+          <SolidColorBrush x:Key="MutedBrush" Color="#8A8F98" />
+          <!-- The output pane sits a shade below the page so it reads as a console. -->
+          <SolidColorBrush x:Key="LogPaneBrush" Color="#15171C" />
+          <SolidColorBrush x:Key="ProblemBrush" Color="#3A2A2A" />
+          <SolidColorBrush x:Key="ChartBackgroundBrush" Color="#15171C" />
+          <SolidColorBrush x:Key="ChartGridBrush" Color="#242830" />
+          <SolidColorBrush x:Key="ChartSeriesBrush" Color="#3D6FA8" />
+          <SolidColorBrush x:Key="ChartTrendBrush" Color="#6FB4F5" />
+        </ResourceDictionary>
+
+        <ResourceDictionary x:Key="Light">
+          <!-- Darker than the dark-mode equivalents: these sit on white and have to stay
+               legible rather than merely visible. -->
+          <SolidColorBrush x:Key="OkBrush" Color="#1E7A2E" />
+          <SolidColorBrush x:Key="WarnBrush" Color="#9A6400" />
+          <SolidColorBrush x:Key="FailBrush" Color="#C0291F" />
+          <SolidColorBrush x:Key="MutedBrush" Color="#5F6670" />
+          <SolidColorBrush x:Key="LogPaneBrush" Color="#F2F3F5" />
+          <SolidColorBrush x:Key="ProblemBrush" Color="#FBE6E4" />
+          <SolidColorBrush x:Key="ChartBackgroundBrush" Color="#F7F8FA" />
+          <SolidColorBrush x:Key="ChartGridBrush" Color="#DFE3E8" />
+          <SolidColorBrush x:Key="ChartSeriesBrush" Color="#9DBDE0" />
+          <SolidColorBrush x:Key="ChartTrendBrush" Color="#1F6FB8" />
+        </ResourceDictionary>
+
+      </ResourceDictionary.ThemeDictionaries>
+
+      <FontFamily x:Key="MonoFont">monospace</FontFamily>
+    </ResourceDictionary>
+  </Styles.Resources>
+
+  <Style Selector="TextBlock.h1">
+    <Setter Property="FontSize" Value="20" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Margin" Value="0,0,0,2" />
+  </Style>
+
+  <Style Selector="TextBlock.subtle">
+    <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+  </Style>
+
+  <Style Selector="TextBlock.sectionHeader">
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Margin" Value="0,12,0,4" />
+  </Style>
+
+  <Style Selector="TextBlock.tableHeader">
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
+    <Setter Property="Margin" Value="0,0,12,4" />
+  </Style>
+
+  <Style Selector="TextBlock.mono">
+    <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
+    <Setter Property="FontSize" Value="12" />
+  </Style>
+
+  <!-- A card, painted from the active Rice theme. -->
+  <Style Selector="Border.panel">
+    <Setter Property="Background" Value="{DynamicResource RiceSurfaceBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource RiceBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Padding" Value="12" />
+  </Style>
+
+  <Style Selector="Border.panel.problem">
+    <Setter Property="Background" Value="{DynamicResource ProblemBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource FailBrush}" />
+  </Style>
+
+  <Style Selector="Border.panel.warning">
+    <Setter Property="BorderBrush" Value="{DynamicResource WarnBrush}" />
+  </Style>
+
+  <!-- Field label above its editor, used throughout the forms. -->
+  <Style Selector="TextBlock.fieldLabel">
+    <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="Margin" Value="0,0,0,2" />
+  </Style>
+
+  <Style Selector="StackPanel.field">
+    <Setter Property="Margin" Value="0,0,12,10" />
+    <Setter Property="MinWidth" Value="150" />
+  </Style>
+</Styles>

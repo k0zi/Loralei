@@ -1,0 +1,201 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Loralei.ImageResizer.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="1100" d:DesignHeight="720"
+             x:Class="Loralei.ImageResizer.Views.MainView"
+             x:DataType="vm:MainViewModel">
+
+    <UserControl.Styles>
+        <Style Selector="ToggleButton.mode">
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Width" Value="32" />
+            <Setter Property="Height" Value="26" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Border.badge">
+            <Setter Property="CornerRadius" Value="3" />
+            <Setter Property="Padding" Value="5,1" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="Margin" Value="4" />
+        </Style>
+        <Style Selector="Border.badge > TextBlock">
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+        <Style Selector="StackPanel.option">
+            <Setter Property="Margin" Value="0,0,14,6" />
+        </Style>
+        <Style Selector="Border.card">
+            <Setter Property="Background" Value="{DynamicResource RiceSurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource RiceBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+        </Style>
+    </UserControl.Styles>
+
+    <DockPanel>
+
+        <!-- Toolbar -->
+        <Border Classes="card" DockPanel.Dock="Top" Margin="0,0,0,4" Padding="12,10">
+            <StackPanel Spacing="10">
+
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Content="Choose folder…" Classes="accent" Command="{Binding BrowseCommand}" />
+                    <Button Content="Reload" Command="{Binding ReloadCommand}" />
+                    <TextBlock Text="{Binding FolderPath, FallbackValue='No folder selected'}"
+                               VerticalAlignment="Center"
+                               Foreground="{DynamicResource RiceForegroundMutedBrush}"
+                               TextTrimming="CharacterEllipsis" MaxWidth="620"
+                               ToolTip.Tip="{Binding FolderPath}" />
+                </StackPanel>
+
+                <!-- Wraps, because the host page can be narrower than one row of these. -->
+                <WrapPanel Orientation="Horizontal">
+
+                    <StackPanel Classes="option" Orientation="Horizontal" Spacing="6">
+                        <TextBlock Text="Output size" VerticalAlignment="Center" />
+                        <ComboBox ItemsSource="{Binding TargetSizes}"
+                                  SelectedItem="{Binding SelectedTargetSize}"
+                                  MinWidth="90" />
+                    </StackPanel>
+
+                    <StackPanel Classes="option" Orientation="Horizontal" Spacing="6">
+                        <TextBlock Text="Default mode" VerticalAlignment="Center" />
+                        <ComboBox ItemsSource="{Binding ModeOptions}"
+                                  SelectedItem="{Binding SelectedModeOption}"
+                                  MinWidth="190" />
+                    </StackPanel>
+
+                    <StackPanel Classes="option" Orientation="Horizontal" Spacing="6">
+                        <TextBlock Text="Pad fill" VerticalAlignment="Center" />
+                        <ComboBox ItemsSource="{Binding PadFillOptions}"
+                                  SelectedItem="{Binding SelectedPadFillOption}"
+                                  MinWidth="150" />
+                    </StackPanel>
+
+                    <StackPanel Classes="option" Orientation="Horizontal" Spacing="6">
+                        <TextBlock Text="Quality" VerticalAlignment="Center"
+                                   ToolTip.Tip="JPEG and WebP encoding quality." />
+                        <Slider Value="{Binding JpegQuality}" Minimum="50" Maximum="100"
+                                Width="120" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding JpegQuality, StringFormat='{}{0:0}'}"
+                                   VerticalAlignment="Center" Width="26" />
+                    </StackPanel>
+
+                    <Button Content="Apply mode to all" Command="{Binding ApplyDefaultToAllCommand}"
+                            Margin="0,0,0,6" />
+                </WrapPanel>
+
+            </StackPanel>
+        </Border>
+
+        <!-- Status bar -->
+        <Border Classes="card" DockPanel.Dock="Bottom" Margin="0,4,0,0" Padding="12,8">
+            <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto,Auto">
+                <Button Grid.Column="0" Content="Select all" Command="{Binding SelectAllCommand}" />
+                <Button Grid.Column="1" Content="Select none" Command="{Binding SelectNoneCommand}" Margin="6,0,0,0" />
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10"
+                            VerticalAlignment="Center" Margin="16,0">
+                    <TextBlock Text="{Binding StatusText}" VerticalAlignment="Center"
+                               TextTrimming="CharacterEllipsis" />
+                    <ProgressBar Value="{Binding ProgressValue}" Minimum="0" Maximum="100"
+                                 Width="180" VerticalAlignment="Center"
+                                 IsVisible="{Binding IsProgressVisible}" />
+                </StackPanel>
+
+                <Button Grid.Column="3" Content="Cancel" Command="{Binding CancelCommand}"
+                        IsVisible="{Binding IsProgressVisible}" Margin="0,0,6,0" />
+                <Button Grid.Column="4" Content="{Binding SaveButtonText}"
+                        Command="{Binding SaveCommand}" Classes="accent" />
+            </Grid>
+        </Border>
+
+        <!-- Image grid -->
+        <Panel>
+            <ListBox x:Name="ImageGrid"
+                     ItemsSource="{Binding Images}"
+                     SelectedItem="{Binding SelectedImage}"
+                     Background="Transparent"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="vm:ImageItemViewModel">
+                        <StackPanel Width="188" Spacing="4" Margin="2">
+
+                            <Panel Height="168">
+                                <Border Background="{DynamicResource RiceSurfaceBrush}"
+                                        BorderBrush="{DynamicResource RiceBorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="6" />
+                                <Image Source="{Binding Thumbnail}" Stretch="Uniform" Margin="6" />
+
+                                <Border Classes="badge" Background="#B3C2410C"
+                                        IsVisible="{Binding IsUpscaling}"
+                                        ToolTip.Tip="The selected region is smaller than the output, so pixels are interpolated.">
+                                    <TextBlock Text="upscaling" />
+                                </Border>
+
+                                <Border Classes="badge" Background="#B3166534"
+                                        HorizontalAlignment="Right"
+                                        IsVisible="{Binding IsSaved}">
+                                    <TextBlock Text="saved" />
+                                </Border>
+
+                                <Border Classes="badge" Background="#B3991B1B"
+                                        HorizontalAlignment="Right"
+                                        IsVisible="{Binding IsFailed}"
+                                        ToolTip.Tip="{Binding StatusMessage}">
+                                    <TextBlock Text="failed" />
+                                </Border>
+
+                                <CheckBox IsChecked="{Binding IsIncluded}"
+                                          VerticalAlignment="Bottom" HorizontalAlignment="Right"
+                                          Margin="4" ToolTip.Tip="Include this image when saving." />
+                            </Panel>
+
+                            <TextBlock Text="{Binding Source.FileName}" FontSize="12"
+                                       TextTrimming="CharacterEllipsis"
+                                       ToolTip.Tip="{Binding Source.Path}" />
+
+                            <TextBlock FontSize="11" Foreground="{DynamicResource RiceForegroundMutedBrush}">
+                                <Run Text="{Binding Source.DimensionsText}" />
+                                <Run Text="·" />
+                                <Run Text="{Binding Source.FileSizeText}" />
+                            </TextBlock>
+
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <ToggleButton Classes="mode" Content="Crop" IsChecked="{Binding IsCrop}"
+                                              ToolTip.Tip="Crop: fill the square, trimming the long edge." />
+                                <ToggleButton Classes="mode" Content="Pad" IsChecked="{Binding IsPad}"
+                                              ToolTip.Tip="Pad: fit the whole image and fill the rest." />
+                                <ToggleButton Classes="mode" Content="Man." IsChecked="{Binding IsManual}"
+                                              ToolTip.Tip="Manual: use the square set in the crop editor." />
+                                <Button Content="Edit…" FontSize="11" Padding="8,3"
+                                        Command="{Binding $parent[ListBox].((vm:MainViewModel)DataContext).EditCommand}"
+                                        CommandParameter="{Binding}" />
+                            </StackPanel>
+
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <TextBlock Text="Choose a folder to load its images."
+                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                       Foreground="{DynamicResource RiceForegroundMutedBrush}" FontSize="16"
+                       IsVisible="{Binding !Images.Count}" />
+        </Panel>
+
+    </DockPanel>
+</UserControl>

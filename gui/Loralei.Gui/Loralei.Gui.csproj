@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- The Windows executable's icon; the windows themselves take Assets/loralei.png. -->
+    <ApplicationIcon>Assets/loralei.ico</ApplicationIcon>
+    <AvaloniaNameGeneratorIsEnabled>true</AvaloniaNameGeneratorIsEnabled>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="Assets/**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="$(AvaloniaVersion)" />
+    <PackageReference Include="Avalonia.Desktop" Version="$(AvaloniaVersion)" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="$(AvaloniaVersion)" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="$(AvaloniaVersion)" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <!-- Asks for Avalonia 12.1.3, which is why AvaloniaVersion is pinned to exactly that. -->
+    <PackageReference Include="KD.Avalonia.Rice" Version="26.10.6" />
+    <!-- Asks for Avalonia 12.0.0; the explicit references above unify it upward. -->
+    <PackageReference Include="Material.Icons.Avalonia" Version="3.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Loralei.Core/Loralei.Core.csproj" />
+    <!-- Not for its types: this puts the `loralei` executable next to the app, which is
+         where LoraleiPaths looks for the CLI the GUI drives. -->
+    <ProjectReference Include="../Loralei.Cli/Loralei.Cli.csproj" />
+    <ProjectReference Include="../Loralei.ImageResizer/Loralei.ImageResizer.csproj" />
+    <ProjectReference Include="../Loralei.DatasetMaker/Loralei.DatasetMaker.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Loralei.Gui.Tests" />
+  </ItemGroup>
+</Project>

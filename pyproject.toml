@@ -1,0 +1,34 @@
+[project]
+name = "loralei"
+version = "0.2.0"
+description = "The torch worker of the loralei LoRA trainer (Qwen-Image, Krea 2, LTX 2.3; ROCm only)"
+requires-python = ">=3.12,<3.13"
+# Only what the worker itself imports. Configuration, model lookup and download, the
+# dataset scan and the command line all live in the C# side (gui/Loralei.Core, Loralei.Cli),
+# which starts this package with `python -m loralei <job>`.
+dependencies = [
+    "safetensors>=0.5",
+    "diffusers>=0.40.0",
+    "transformers>=4.56",
+    "peft>=0.17",
+    "accelerate>=1.10",
+    "pillow>=11.0",
+]
+
+# NOTE: torch/torchvision are deliberately NOT listed here.
+# They must come from the ROCm wheel index, pinned:
+#   uv pip install --index-url https://download.pytorch.org/whl/rocm7.1 \
+#       torch==2.13.0+rocm7.1 torchvision==0.28.0+rocm7.1
+
+[project.optional-dependencies]
+bnb = ["bitsandbytes>=0.50"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/loralei"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

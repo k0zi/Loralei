@@ -1,0 +1,22 @@
+<rice:RiceWindow xmlns="https://github.com/avaloniaui"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:rice="clr-namespace:KD.Avalonia.Rice.Controls;assembly=KD.Avalonia.Rice"
+                 xmlns:vm="using:Loralei.Gui.ViewModels"
+                 x:Class="Loralei.Gui.Views.SettingsWindow"
+                 x:DataType="vm:MainWindowViewModel"
+                 Title="Settings" Icon="/Assets/loralei.png" Width="420" Height="560"
+                 CanMinimize="False" CanMaximize="False" ShowInTaskbar="False"
+                 WindowStartupLocation="CenterOwner">
+  <DockPanel Margin="16">
+    <StackPanel DockPanel.Dock="Top" Margin="4,0,0,16" Spacing="4">
+      <TextBlock Classes="sectionHeader" Margin="0" Text="Light / dark at start-up" />
+      <TextBlock Classes="subtle"
+                 Text="The title-bar button switches it for the current session only." />
+      <ComboBox ItemsSource="{Binding ThemeOptions}" SelectedItem="{Binding SelectedTheme}"
+                MinWidth="140" Margin="0,4,0,0" />
+    </StackPanel>
+
+    <TextBlock DockPanel.Dock="Top" Classes="sectionHeader" Margin="4,0,0,8" Text="Colour theme" />
+    <rice:ThemeSelector />
+  </DockPanel>
+</rice:RiceWindow>

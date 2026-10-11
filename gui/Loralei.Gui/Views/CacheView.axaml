@@ -1,0 +1,53 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Loralei.Gui.ViewModels"
+             xmlns:controls="using:Loralei.Gui.Controls"
+             xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="Loralei.Gui.Views.CacheView"
+             x:DataType="vm:CacheViewModel">
+  <StackPanel Spacing="12">
+
+    <StackPanel Classes="field">
+      <TextBlock Classes="fieldLabel" Text="Dataset folder" />
+      <controls:PathPicker Path="{Binding Dataset, Mode=TwoWay}" Title="Select the dataset folder"
+                           PlaceholderText="/path/to/my-dataset" />
+    </StackPanel>
+
+    <WrapPanel>
+      <StackPanel Classes="field">
+        <TextBlock Classes="fieldLabel" Text="Model" />
+        <ComboBox ItemsSource="{Binding ModelOptions}" SelectedItem="{Binding Model}" MinWidth="150" />
+      </StackPanel>
+      <StackPanel Classes="field">
+        <TextBlock Classes="fieldLabel" Text="Resolution" />
+        <TextBox Text="{Binding Resolution}" PlaceholderText="from config" />
+      </StackPanel>
+      <StackPanel Classes="field">
+        <TextBlock Classes="fieldLabel" Text="GPU index" />
+        <TextBox Text="{Binding Gpu}" PlaceholderText="auto" />
+      </StackPanel>
+      <StackPanel Classes="field">
+        <TextBlock Classes="fieldLabel" Text="VAE device" />
+        <ComboBox ItemsSource="{Binding VaeDeviceOptions}" SelectedItem="{Binding VaeDevice}" MinWidth="120" />
+      </StackPanel>
+    </WrapPanel>
+
+    <TextBlock Classes="subtle"
+               Text="cpu is the safe default: on gfx1200 the VAE returns NaN for most 1024-class shapes on the GPU." />
+
+    <StackPanel Orientation="Horizontal" Spacing="10">
+      <CheckBox Content="Recompute even if cached" IsChecked="{Binding Force}" />
+      <Button  Command="{Binding RunCommand}" IsEnabled="{Binding !Shell.IsBusy}" >
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <icons:MaterialIcon Kind="DatabaseArrowDownOutline" Width="15" Height="15" VerticalAlignment="Center" />
+          <TextBlock Text="Cache now" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+    </StackPanel>
+
+    <TextBlock Classes="subtle" Text="{Binding Status}"
+               IsVisible="{Binding Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+    <SelectableTextBlock Foreground="{DynamicResource FailBrush}" Text="{Binding Error}" TextWrapping="Wrap"
+                         IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+  </StackPanel>
+</UserControl>

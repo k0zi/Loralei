@@ -1,0 +1,142 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Loralei.Gui.ViewModels"
+             xmlns:controls="using:Loralei.Gui.Controls"
+             xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="Loralei.Gui.Views.CaptionView"
+             x:DataType="vm:CaptionViewModel">
+  <StackPanel Spacing="12">
+
+    <StackPanel Classes="field">
+      <TextBlock Classes="fieldLabel" Text="Dataset folder (images are found recursively; each gets a .txt beside it)" />
+      <controls:PathPicker Path="{Binding Dataset, Mode=TwoWay}" Title="Select the dataset folder"
+                           PlaceholderText="/path/to/my-dataset" />
+    </StackPanel>
+
+    <StackPanel Orientation="Horizontal" Spacing="10">
+      <Button Command="{Binding CaptionCommand}" IsEnabled="{Binding !Shell.IsBusy}">
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <icons:MaterialIcon Kind="ImageText" Width="15" Height="15" VerticalAlignment="Center" />
+          <TextBlock Text="Caption" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+      <Button Command="{Binding PreviewCommand}" IsEnabled="{Binding !Shell.IsBusy}"
+              ToolTip.Tip="List what would be captioned. Nothing is sent to the endpoint.">
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <icons:MaterialIcon Kind="EyeOutline" Width="15" Height="15" VerticalAlignment="Center" />
+          <TextBlock Text="Preview" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+      <CheckBox Content="Overwrite existing captions" IsChecked="{Binding Overwrite}"
+                ToolTip.Tip="Off, an image that already has a .txt is skipped." />
+    </StackPanel>
+
+    <Border Classes="panel">
+      <StackPanel>
+        <TextBlock Text="Endpoint" FontWeight="SemiBold" Margin="0,0,0,8" />
+        <WrapPanel>
+          <StackPanel Classes="field" MinWidth="300">
+            <TextBlock Classes="fieldLabel" Text="Base URL (OpenAI-compatible)" />
+            <TextBox Text="{Binding BaseUrl}" PlaceholderText="http://127.0.0.1:8080/v1" />
+          </StackPanel>
+          <StackPanel Classes="field" MinWidth="300">
+            <TextBlock Classes="fieldLabel" Text="Model" />
+            <TextBox Text="{Binding Model}" />
+          </StackPanel>
+          <StackPanel Classes="field" MinWidth="220">
+            <TextBlock Classes="fieldLabel" Text="API key" />
+            <TextBox Text="{Binding ApiKey}" PasswordChar="•" PlaceholderText="none, or from the environment"
+                     ToolTip.Tip="Empty, DATASETMAKER_API_KEY or OPENAI_API_KEY is used if set; otherwise no key is sent." />
+          </StackPanel>
+          <StackPanel Classes="field" MinWidth="110">
+            <TextBlock Classes="fieldLabel" Text="Image detail" />
+            <ComboBox ItemsSource="{Binding ImageDetailOptions}" SelectedItem="{Binding ImageDetail}" MinWidth="110" />
+          </StackPanel>
+          <StackPanel Classes="field" MinWidth="110">
+            <TextBlock Classes="fieldLabel" Text="Max tokens" />
+            <TextBox Text="{Binding MaxTokens}" />
+          </StackPanel>
+          <StackPanel Classes="field" MinWidth="110">
+            <TextBlock Classes="fieldLabel" Text="Temperature" />
+            <TextBox Text="{Binding Temperature}" />
+          </StackPanel>
+          <StackPanel Classes="field" MinWidth="110">
+            <TextBlock Classes="fieldLabel" Text="Timeout (seconds)" />
+            <TextBox Text="{Binding TimeoutSeconds}" />
+          </StackPanel>
+        </WrapPanel>
+      </StackPanel>
+    </Border>
+
+    <Border Classes="panel">
+      <StackPanel>
+        <TextBlock Text="Captions" FontWeight="SemiBold" Margin="0,0,0,8" />
+        <WrapPanel>
+          <StackPanel Classes="field" MinWidth="220">
+            <TextBlock Classes="fieldLabel" Text="Trigger word (put first: 'ohwx, ...')" />
+            <TextBox Text="{Binding TriggerWord}" PlaceholderText="none" />
+          </StackPanel>
+          <StackPanel Classes="field" MinWidth="110">
+            <TextBlock Classes="fieldLabel" Text="Parallel requests" />
+            <TextBox Text="{Binding MaxParallel}" />
+          </StackPanel>
+          <StackPanel Classes="field" MinWidth="110">
+            <TextBlock Classes="fieldLabel" Text="Retries" />
+            <TextBox Text="{Binding MaxRetries}"
+                     ToolTip.Tip="For timeouts, 429 and 5xx, with a doubling wait: 2s, 4s, 8s..." />
+          </StackPanel>
+        </WrapPanel>
+
+        <StackPanel Classes="field" Margin="0,0,0,10">
+          <TextBlock Classes="fieldLabel" Text="Extra context, added to the system prompt (optional)" />
+          <TextBox Text="{Binding ExtraContext}" AcceptsReturn="True" TextWrapping="Wrap" Height="60"
+                   PlaceholderText="The person in the images is John Smith." />
+        </StackPanel>
+
+        <StackPanel Classes="field" Margin="0">
+          <DockPanel>
+            <Button DockPanel.Dock="Right" Content="Reset to default" Padding="8,2" Margin="0,0,0,4"
+                    Command="{Binding ResetSystemPromptCommand}" />
+            <TextBlock Classes="fieldLabel" Text="System prompt (sets the style of every caption)"
+                       VerticalAlignment="Bottom" />
+          </DockPanel>
+          <TextBox Text="{Binding SystemPrompt}" AcceptsReturn="True" TextWrapping="Wrap" Height="150" />
+        </StackPanel>
+      </StackPanel>
+    </Border>
+
+    <Border Classes="panel" IsVisible="{Binding HasProgress}">
+      <StackPanel Spacing="6">
+        <ProgressBar Minimum="0" Maximum="{Binding Total}" Value="{Binding Done}" Height="6" />
+        <TextBlock Classes="mono">
+          <Run Text="{Binding Done}" /><Run Text=" / " /><Run Text="{Binding Total}" />
+          <Run Text="   captioned " /><Run Text="{Binding Succeeded}" />
+          <Run Text="   skipped " /><Run Text="{Binding Skipped}" />
+          <Run Text="   failed " /><Run Text="{Binding Failed}" />
+        </TextBlock>
+        <StackPanel IsVisible="{Binding HasLastCaption}" Margin="0,6,0,0">
+          <TextBlock Classes="fieldLabel" Text="{Binding LastImage, StringFormat='Latest caption: {0}'}" />
+          <SelectableTextBlock Text="{Binding LastCaption}" TextWrapping="Wrap" />
+        </StackPanel>
+      </StackPanel>
+    </Border>
+
+    <Border Classes="panel" IsVisible="{Binding Failures.Count}" BorderBrush="{DynamicResource WarnBrush}">
+      <StackPanel>
+        <TextBlock Text="Failed" FontWeight="SemiBold" Foreground="{DynamicResource WarnBrush}" Margin="0,0,0,6" />
+        <ItemsControl ItemsSource="{Binding Failures}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <TextBlock Classes="mono" Text="{Binding}" TextWrapping="Wrap" Margin="0,1" />
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+    </Border>
+
+    <TextBlock Classes="subtle" Text="{Binding Status}"
+               IsVisible="{Binding Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+    <SelectableTextBlock Foreground="{DynamicResource FailBrush}" Text="{Binding Error}" TextWrapping="Wrap"
+                         IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+  </StackPanel>
+</UserControl>

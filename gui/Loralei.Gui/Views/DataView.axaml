@@ -1,0 +1,84 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Loralei.Gui.ViewModels"
+             xmlns:core="using:Loralei.Core"
+             xmlns:controls="using:Loralei.Gui.Controls"
+             xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="Loralei.Gui.Views.DataView"
+             x:DataType="vm:DataViewModel">
+  <StackPanel Spacing="12">
+
+    <StackPanel Classes="field">
+      <TextBlock Classes="fieldLabel" Text="Dataset folder (images and .txt captions, searched recursively)" />
+      <controls:PathPicker Path="{Binding Dataset, Mode=TwoWay}" Title="Select the dataset folder"
+                           PlaceholderText="/path/to/my-dataset" />
+    </StackPanel>
+
+    <StackPanel Orientation="Horizontal" Spacing="10">
+      <StackPanel Classes="field" MinWidth="120">
+        <TextBlock Classes="fieldLabel" Text="Resolution" />
+        <TextBox Text="{Binding Resolution}" />
+      </StackPanel>
+      <StackPanel Classes="field" MinWidth="120">
+        <TextBlock Classes="fieldLabel" Text="Caption extension" />
+        <TextBox Text="{Binding CaptionExtension}" />
+      </StackPanel>
+      <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Bottom" Margin="0,0,0,10">
+        <Button  Command="{Binding CheckCommand}" IsEnabled="{Binding !Shell.IsBusy}" >
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <icons:MaterialIcon Kind="CheckCircle" Width="15" Height="15" VerticalAlignment="Center" />
+          <TextBlock Text="Check" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+        <Button  Command="{Binding UseForTrainingCommand}" >
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <icons:MaterialIcon Kind="Tune" Width="15" Height="15" VerticalAlignment="Center" />
+          <TextBlock Text="Use for training" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+      </StackPanel>
+    </StackPanel>
+
+    <Border Classes="panel" IsVisible="{Binding Buckets.Count}">
+      <StackPanel>
+        <TextBlock Text="{Binding Pairs, StringFormat='{}{0} image/caption pairs'}"
+                   FontWeight="SemiBold" Margin="0,0,0,8" />
+        <Grid ColumnDefinitions="160,100,*" Margin="0,0,0,4">
+          <TextBlock Grid.Column="0" Classes="tableHeader" Text="bucket (w x h)" />
+          <TextBlock Grid.Column="1" Classes="tableHeader" Text="images" />
+          <TextBlock Grid.Column="2" Classes="tableHeader" Text="latent tokens" />
+        </Grid>
+        <ItemsControl ItemsSource="{Binding Buckets}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="core:BucketRow">
+              <Grid ColumnDefinitions="160,100,*" Margin="0,2">
+                <TextBlock Grid.Column="0" Classes="mono" Text="{Binding Bucket}" />
+                <TextBlock Grid.Column="1" Classes="mono" Text="{Binding Images}" />
+                <TextBlock Grid.Column="2" Classes="mono subtle" Text="{Binding LatentTokens}" />
+              </Grid>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <TextBlock Classes="subtle" Margin="0,8,0,0" Text="{Binding Captions}" />
+      </StackPanel>
+    </Border>
+
+    <Border Classes="panel" IsVisible="{Binding Problems.Count}" BorderBrush="{DynamicResource WarnBrush}">
+      <StackPanel>
+        <TextBlock Text="Problems" FontWeight="SemiBold" Foreground="{DynamicResource WarnBrush}" Margin="0,0,0,6" />
+        <ItemsControl ItemsSource="{Binding Problems}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <TextBlock Classes="mono" Text="{Binding}" TextWrapping="Wrap" Margin="0,1" />
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+    </Border>
+
+    <TextBlock Classes="subtle" Text="{Binding Status}"
+               IsVisible="{Binding Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+    <SelectableTextBlock Foreground="{DynamicResource FailBrush}" Text="{Binding Error}" TextWrapping="Wrap"
+                         IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+  </StackPanel>
+</UserControl>

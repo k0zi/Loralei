@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- A library with no Avalonia reference and no console: Loralei.Gui's Caption page is its
+       front end. It was a command-line tool; the options it took are that page's fields now. -->
+
+  <ItemGroup>
+    <!-- What a first run starts from, next to the executable; see ConfigStore. -->
+    <None Update="dataset-maker.defaults.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

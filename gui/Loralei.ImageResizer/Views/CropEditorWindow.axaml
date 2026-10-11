@@ -1,0 +1,65 @@
+<rice:RiceWindow xmlns="https://github.com/avaloniaui"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:vm="using:Loralei.ImageResizer.ViewModels"
+                 xmlns:controls="using:Loralei.ImageResizer.Controls"
+                 xmlns:rice="clr-namespace:KD.Avalonia.Rice.Controls;assembly=KD.Avalonia.Rice"
+                 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                 mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="700"
+                 x:Class="Loralei.ImageResizer.Views.CropEditorWindow"
+                 x:DataType="vm:CropEditorViewModel"
+                 Width="960" Height="740"
+                 MinWidth="640" MinHeight="480"
+                 WindowStartupLocation="CenterOwner"
+                 Title="{Binding Title}">
+
+    <DockPanel>
+
+        <Border DockPanel.Dock="Bottom" Padding="12,10"
+                Background="{DynamicResource RiceSurfaceBrush}">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6">
+                    <Button Content="Fill" Command="{Binding FillCommand}"
+                            ToolTip.Tip="Largest square that fits inside the image." />
+                    <Button Content="Fit" Command="{Binding FitCommand}"
+                            ToolTip.Tip="Square that contains the whole image; the rest is padded." />
+                    <Button Content="Centre" Command="{Binding CenterCommand}" />
+                    <Button Content="Reset" Command="{Binding ResetCommand}" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6">
+                    <Button Content="Cancel" Click="OnCancel" />
+                    <Button Content="Apply crop" Classes="accent" Click="OnAccept" IsDefault="True" />
+                </StackPanel>
+
+            </Grid>
+        </Border>
+
+        <!-- The readout lives up here rather than between the buttons, where it had no room. -->
+        <Border DockPanel.Dock="Top" Padding="12,8">
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                <TextBlock Grid.Column="0" Foreground="{DynamicResource RiceForegroundMutedBrush}" FontSize="12"
+                           Text="Drag inside the square to move it, drag a corner to resize, scroll to zoom. The square may hang off the image - whatever does is filled with the chosen pad fill."
+                           TextWrapping="Wrap" VerticalAlignment="Center" />
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <Border Background="#33E07A2B" BorderBrush="#E07A2B" BorderThickness="1"
+                            CornerRadius="3" Padding="6,1"
+                            IsVisible="{Binding IsUpscaling}">
+                        <TextBlock Text="upscaling" Foreground="#E07A2B" FontSize="11" />
+                    </Border>
+                    <TextBlock Text="{Binding ReadoutText}" FontSize="12"
+                               Foreground="{DynamicResource RiceForegroundBrush}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <controls:CropOverlay Image="{Binding Preview}"
+                              SourceWidth="{Binding Source.PixelWidth}"
+                              SourceHeight="{Binding Source.PixelHeight}"
+                              Selection="{Binding Selection, Mode=TwoWay}"
+                              PadFill="{Binding Settings.PadFill}" />
+
+    </DockPanel>
+</rice:RiceWindow>

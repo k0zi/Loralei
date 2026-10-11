@@ -1,0 +1,23 @@
+# LTX 2.3 dev - ~19B, 48 blocks, Gemma 3 12B text encoder, 32x VAE. Trained on images as
+# one-frame clips, video stream only. Starting values, not measured ones.
+resolution: 1024
+rank: 32
+learning_rate: 1.0e-4
+max_steps: 2000
+warmup_steps: 50
+
+# The pipeline shifts by token count (mu 0.95-2.05, exponential); 1024^2 is 1024 tokens,
+# the low end, which is a flux-style shift of about 2.6.
+timestep_sampling: shift
+flow_shift: 2.6
+weighting_scheme: none
+
+# 35 GiB of bf16 weights.
+gradient_checkpointing: true
+blocks_to_swap: 36
+fp8_base: true
+
+optimizer: adamw8bit
+save_every: 250
+sample_steps: 30
+sample_cfg: 3.0

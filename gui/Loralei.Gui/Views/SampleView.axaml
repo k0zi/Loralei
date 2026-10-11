@@ -1,0 +1,88 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Loralei.Gui.ViewModels"
+             xmlns:controls="using:Loralei.Gui.Controls"
+             xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="Loralei.Gui.Views.SampleView"
+             x:DataType="vm:SampleViewModel">
+  <StackPanel Spacing="12">
+
+    <StackPanel Classes="field">
+      <TextBlock Classes="fieldLabel" Text="Prompts, one per line" />
+      <TextBox Text="{Binding Prompts}" AcceptsReturn="True" Height="90"
+               PlaceholderText="a photo of sks style, a cat on a roof" />
+    </StackPanel>
+
+    <StackPanel Classes="field">
+      <TextBlock Classes="fieldLabel" Text="LoRA to apply (optional)" />
+      <controls:PathPicker Path="{Binding Lora, Mode=TwoWay}" PickFolder="False" Extension="safetensors"
+                           Title="Select a LoRA" PlaceholderText="runs/my-style/my-style.safetensors" />
+    </StackPanel>
+
+    <WrapPanel>
+      <StackPanel Classes="field">
+        <TextBlock Classes="fieldLabel" Text="Model" />
+        <ComboBox ItemsSource="{Binding ModelOptions}" SelectedItem="{Binding Model}" MinWidth="150" />
+      </StackPanel>
+      <StackPanel Classes="field">
+        <TextBlock Classes="fieldLabel" Text="Steps" />
+        <TextBox Text="{Binding Steps}" />
+      </StackPanel>
+      <StackPanel Classes="field">
+        <TextBlock Classes="fieldLabel" Text="CFG" />
+        <TextBox Text="{Binding Cfg}" />
+      </StackPanel>
+      <StackPanel Classes="field">
+        <TextBlock Classes="fieldLabel" Text="Width" />
+        <TextBox Text="{Binding Width}" />
+      </StackPanel>
+      <StackPanel Classes="field">
+        <TextBlock Classes="fieldLabel" Text="Height" />
+        <TextBox Text="{Binding Height}" />
+      </StackPanel>
+      <StackPanel Classes="field">
+        <TextBlock Classes="fieldLabel" Text="Seed" />
+        <TextBox Text="{Binding Seed}" />
+      </StackPanel>
+      <StackPanel Classes="field">
+        <TextBlock Classes="fieldLabel" Text="GPU index" />
+        <TextBox Text="{Binding Gpu}" PlaceholderText="auto" />
+      </StackPanel>
+      <StackPanel Classes="field" MinWidth="220">
+        <TextBlock Classes="fieldLabel" Text="Output folder" />
+        <TextBox Text="{Binding OutDir}" />
+      </StackPanel>
+    </WrapPanel>
+
+    <StackPanel Orientation="Horizontal" Spacing="10">
+      <Button  Command="{Binding RenderCommand}" IsEnabled="{Binding !Shell.IsBusy}" >
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <icons:MaterialIcon Kind="ImageSearchOutline" Width="15" Height="15" VerticalAlignment="Center" />
+          <TextBlock Text="Render" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+      <TextBlock Classes="subtle" VerticalAlignment="Center"
+                 Text="Around 30 steps at cfg 3-5 suits every model here; each model's preset has its own starting values." />
+    </StackPanel>
+
+    <Border Classes="panel" IsVisible="{Binding Images.Count}">
+      <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+        <ItemsControl ItemsSource="{Binding Images}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="8" /></ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <Image Source="{Binding}" Height="260" Stretch="Uniform" />
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
+    </Border>
+
+    <TextBlock Classes="subtle" Text="{Binding Status}"
+               IsVisible="{Binding Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+    <SelectableTextBlock Foreground="{DynamicResource FailBrush}" Text="{Binding Error}" TextWrapping="Wrap"
+                         IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+  </StackPanel>
+</UserControl>

@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <OutputType>Exe</OutputType>
+    <!-- These tests deliberately drive real child processes with their own timeouts,
+         rather than the ambient test-cancellation token xUnit1051 suggests. -->
+    <NoWarn>$(NoWarn);xUnit1051</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.9.0" />
+    <PackageReference Include="xunit.v3" Version="3.2.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="../TestSupport/Png.cs" Link="Png.cs" />
+    <Compile Include="../TestSupport/CliLock.cs" Link="CliLock.cs" />
+    <Compile Include="../TestSupport/TempWorkspace.cs" Link="TempWorkspace.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Loralei.Core/Loralei.Core.csproj" />
+    <!-- Puts the `loralei` executable beside the tests, for the ones that run the real CLI. -->
+    <ProjectReference Include="../Loralei.Cli/Loralei.Cli.csproj" />
+  </ItemGroup>
+</Project>

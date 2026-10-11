@@ -1,0 +1,23 @@
+# Krea 2 Raw - 12.8B, 28 blocks, Qwen3-VL 4B text encoder, Qwen-Image's VAE.
+# Starting values, not measured ones: nothing here has been tuned on a real run yet.
+resolution: 1024
+rank: 32
+learning_rate: 1.0e-4
+max_steps: 2000
+warmup_steps: 50
+
+# The pipeline shifts its schedule by image size (mu 0.5-1.15, exponential). At 1024^2
+# that works out to a flux-style shift of about 2.5.
+timestep_sampling: shift
+flow_shift: 2.5
+weighting_scheme: none
+
+# 24.5 GiB of bf16 weights: fp8 storage plus block swap, as for Qwen-Image.
+gradient_checkpointing: true
+blocks_to_swap: 14
+fp8_base: true
+
+optimizer: adamw8bit
+save_every: 250
+sample_steps: 28
+sample_cfg: 3.5

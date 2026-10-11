@@ -1,0 +1,21 @@
+# Qwen-Image 2512 - 20B MMDiT, 60 blocks, Qwen2.5-VL text encoder.
+# 41 GiB of bf16 weights, so fp8 weight storage plus deep block swap is mandatory
+# on a 16 GiB card. Expect roughly 10-14 s/it at 1024^2.
+resolution: 1024
+rank: 16
+learning_rate: 5.0e-5
+max_steps: 2000
+warmup_steps: 50
+
+timestep_sampling: shift
+flow_shift: 2.2
+weighting_scheme: none
+
+gradient_checkpointing: true
+blocks_to_swap: 42
+fp8_base: true
+
+optimizer: adamw8bit
+save_every: 250
+sample_steps: 20
+sample_cfg: 4.0

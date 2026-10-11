@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Per-model training defaults; read by ConfigResolver.LoadPreset. -->
+    <EmbeddedResource Include="Presets/*.yaml" LogicalName="Loralei.Core.Presets.%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Loralei.Core.Tests" />
+  </ItemGroup>
+</Project>

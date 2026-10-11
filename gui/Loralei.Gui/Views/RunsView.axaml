@@ -1,0 +1,123 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Loralei.Gui.ViewModels"
+             xmlns:dto="using:Loralei.Core.Dto"
+             xmlns:gui="using:Loralei.Gui"
+             xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="Loralei.Gui.Views.RunsView"
+             x:DataType="vm:RunsViewModel">
+  <StackPanel Spacing="12">
+
+    <StackPanel Orientation="Horizontal" Spacing="10">
+      <Button  Command="{Binding RefreshCommand}" >
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <icons:MaterialIcon Kind="RefreshCircle" Width="15" Height="15" VerticalAlignment="Center" />
+          <TextBlock Text="Refresh" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+      <Button  Command="{Binding LoadIntoTrainFormCommand}" >
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <icons:MaterialIcon Kind="Tune" Width="15" Height="15" VerticalAlignment="Center" />
+          <TextBlock Text="Load into Train form" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+      <Button  Command="{Binding UseForSamplingCommand}" >
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <icons:MaterialIcon Kind="ImageSearchOutline" Width="15" Height="15" VerticalAlignment="Center" />
+          <TextBlock Text="Use for sampling" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+      <Button  Command="{Binding AskDeleteCommand}" IsEnabled="{Binding !Shell.IsBusy}" >
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <icons:MaterialIcon Kind="DeleteCircleOutline" Width="15" Height="15" VerticalAlignment="Center" />
+          <TextBlock Text="Delete" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+    </StackPanel>
+
+    <Border Classes="panel" BorderBrush="{DynamicResource FailBrush}" IsVisible="{Binding ConfirmingDelete}">
+      <StackPanel Spacing="8">
+        <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource FailBrush}"
+                   Text="{Binding Selected.Path, StringFormat='Delete this run directory and everything in it? {0}'}" />
+        <StackPanel Orientation="Horizontal" Spacing="10">
+          <Button  Command="{Binding ConfirmDeleteCommand}" >
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <icons:MaterialIcon Kind="DeleteCircleOutline" Width="15" Height="15" VerticalAlignment="Center" />
+          <TextBlock Text="Delete permanently" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+          <Button  Command="{Binding CancelDeleteCommand}" >
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <icons:MaterialIcon Kind="CloseCircle" Width="15" Height="15" VerticalAlignment="Center" />
+          <TextBlock Text="Cancel" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+        </StackPanel>
+      </StackPanel>
+    </Border>
+
+    <Border Classes="panel" IsVisible="{Binding Entries.Count}">
+      <StackPanel>
+        <Grid ColumnDefinitions="200,150,90,90,*" Margin="0,0,0,4">
+          <TextBlock Grid.Column="0" Classes="tableHeader" Text="run" />
+          <TextBlock Grid.Column="1" Classes="tableHeader" Text="model" />
+          <TextBlock Grid.Column="2" Classes="tableHeader" Text="step" />
+          <TextBlock Grid.Column="3" Classes="tableHeader" Text="state" />
+          <TextBlock Grid.Column="4" Classes="tableHeader" Text="updated" />
+        </Grid>
+        <ListBox ItemsSource="{Binding Entries}" SelectedItem="{Binding Selected}"
+                 Background="Transparent" BorderThickness="0" MaxHeight="260">
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="dto:RunEntry">
+              <Grid ColumnDefinitions="200,150,90,90,*">
+                <TextBlock Grid.Column="0" Text="{Binding Name}" />
+                <TextBlock Grid.Column="1" Classes="subtle" Text="{Binding Model}" />
+                <TextBlock Grid.Column="2" Classes="mono" Text="{Binding Step}" />
+                <TextBlock Grid.Column="3" Text="{Binding State}"
+                           Foreground="{Binding State, Converter={x:Static gui:Converters.StatusBrush}}" />
+                <TextBlock Grid.Column="4" Classes="subtle mono"
+                           Text="{Binding Updated, StringFormat=\{0:yyyy-MM-dd HH:mm\}}" />
+              </Grid>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </StackPanel>
+    </Border>
+
+    <Border Classes="panel" IsVisible="{Binding Manifest.Count}">
+      <StackPanel>
+        <TextBlock Classes="fieldLabel" Text="manifest.json" />
+        <ItemsControl ItemsSource="{Binding Manifest}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <Grid ColumnDefinitions="200,*" Margin="0,2">
+                <TextBlock Grid.Column="0" Classes="mono subtle" Text="{Binding Key}" />
+                <TextBlock Grid.Column="1" Classes="mono" Text="{Binding Value}" TextWrapping="Wrap" />
+              </Grid>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <TextBlock Classes="fieldLabel" Text="files" Margin="0,10,0,2"
+                   IsVisible="{Binding Files.Count}" />
+        <ItemsControl ItemsSource="{Binding Files}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <TextBlock Classes="mono" Text="{Binding}" Margin="0,1" />
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+    </Border>
+
+    <Expander Header="config.resolved.yaml"
+              IsVisible="{Binding ResolvedConfig, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+      <SelectableTextBlock Classes="mono" Text="{Binding ResolvedConfig}" TextWrapping="NoWrap" />
+    </Expander>
+
+    <TextBlock Classes="subtle" Text="{Binding Status}"
+               IsVisible="{Binding Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+    <SelectableTextBlock Foreground="{DynamicResource FailBrush}" Text="{Binding Error}" TextWrapping="Wrap"
+                         IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+  </StackPanel>
+</UserControl>

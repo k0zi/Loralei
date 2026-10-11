@@ -1,0 +1,95 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Loralei.Gui.ViewModels"
+             xmlns:core="using:Loralei.Core"
+             xmlns:gui="using:Loralei.Gui"
+             xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="Loralei.Gui.Views.ModelsView"
+             x:DataType="vm:ModelsViewModel">
+  <StackPanel Spacing="12">
+
+    <StackPanel Orientation="Horizontal" Spacing="10">
+      <Button  Command="{Binding RefreshCommand}" IsEnabled="{Binding !Shell.IsBusy}" >
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <icons:MaterialIcon Kind="RefreshCircle" Width="15" Height="15" VerticalAlignment="Center" />
+          <TextBlock Text="Refresh" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+      <Button  Command="{Binding PullCommand}"
+              IsEnabled="{Binding !Shell.IsBusy}" >
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <icons:MaterialIcon Kind="DownloadBox" Width="15" Height="15" VerticalAlignment="Center" />
+          <TextBlock Text="Download ticked" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+      <TextBlock VerticalAlignment="Center" Classes="subtle" Text="{Binding FreeSpace}" />
+    </StackPanel>
+
+    <Border Classes="panel" IsVisible="{Binding Models.Count}">
+      <StackPanel>
+        <Grid ColumnDefinitions="36,250,110,110,*" Margin="0,0,0,4">
+          <TextBlock Grid.Column="1" Classes="tableHeader" Text="model" />
+          <TextBlock Grid.Column="2" Classes="tableHeader" Text="status" />
+          <TextBlock Grid.Column="3" Classes="tableHeader" Text="to download" />
+          <TextBlock Grid.Column="4" Classes="tableHeader" Text="found in" />
+        </Grid>
+        <ItemsControl ItemsSource="{Binding Models}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:ModelChoice">
+              <Grid ColumnDefinitions="36,250,110,110,*" Margin="0,5">
+                <!-- A model that is already complete has nothing left to download. -->
+                <CheckBox Grid.Column="0" VerticalAlignment="Center" IsChecked="{Binding IsChecked}"
+                          IsEnabled="{Binding !Row.Ready}"
+                          ToolTip.Tip="Include in the next download" />
+                <StackPanel Grid.Column="1">
+                  <TextBlock Classes="mono" Text="{Binding Row.Key}" />
+                  <TextBlock Classes="subtle" FontSize="11" Text="{Binding Row.Description}" />
+                </StackPanel>
+                <TextBlock Grid.Column="2" VerticalAlignment="Center" Text="{Binding Row.Status}"
+                           Foreground="{Binding Row.Status, Converter={x:Static gui:Converters.StatusBrush}}" />
+                <TextBlock Grid.Column="3" VerticalAlignment="Center" Text="{Binding Row.ToDownload}" />
+                <StackPanel Grid.Column="4">
+                  <TextBlock Classes="subtle" FontSize="11" Text="{Binding Row.FoundIn}" TextWrapping="Wrap" />
+                  <TextBlock Foreground="{DynamicResource WarnBrush}" FontSize="11" Text="{Binding Row.Missing}" TextWrapping="Wrap"
+                             IsVisible="{Binding !Row.Ready}" />
+                </StackPanel>
+              </Grid>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+    </Border>
+
+    <Expander Header="Model roots searched, in order"
+              IsVisible="{Binding Roots, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+      <SelectableTextBlock Classes="mono" Text="{Binding Roots}" />
+    </Expander>
+
+    <Expander Header="Reclaimable caches">
+      <StackPanel Spacing="8">
+        <StackPanel Orientation="Horizontal" Spacing="10">
+          <TextBlock Text="Ignore below (GiB)" VerticalAlignment="Center" Classes="subtle" />
+          <TextBox Text="{Binding MinGib}" Width="80" />
+          <Button  Command="{Binding ListReclaimableCommand}"
+                  IsEnabled="{Binding !Shell.IsBusy}" >
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <icons:MaterialIcon Kind="Broom" Width="15" Height="15" VerticalAlignment="Center" />
+          <TextBlock Text="List" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+        </StackPanel>
+        <SelectableTextBlock Classes="mono" Text="{Binding Reclaimable}" TextWrapping="Wrap" />
+      </StackPanel>
+    </Expander>
+
+    <Expander Header="Raw output"
+              IsVisible="{Binding RawListing, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+      <SelectableTextBlock Classes="mono" Text="{Binding RawListing}" TextWrapping="NoWrap" />
+    </Expander>
+
+    <TextBlock Classes="subtle" Text="{Binding Status}"
+               IsVisible="{Binding Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+    <SelectableTextBlock Foreground="{DynamicResource FailBrush}" Text="{Binding Error}" TextWrapping="Wrap"
+                         IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+  </StackPanel>
+</UserControl>

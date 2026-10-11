@@ -1,0 +1,18 @@
+{
+  "OpenAI": {
+    "BaseUrl": "http://127.0.0.1:8080/v1",
+    "ApiKey": "",
+    "Model": "Qwen3-VL-8B-Instruct-abliterated.Q5_K_M.gguf",
+    "MaxTokens": 400,
+    "Temperature": 0.3,
+    "TimeoutSeconds": 120,
+    "ImageDetail": "high"
+  },
+  "Caption": {
+    "SystemPrompt": "You write captions for images in a LoRA training dataset for modern text-to-image and text-to-video models (Z-Image, Qwen-Image, LTX). Write a single detailed paragraph of natural English prose in the present tense. Do not start with phrases like \"The image shows\", \"This is a picture of\" or \"In this image\"; start directly with the main subject. Do not use lists, headings, markdown or quotation marks around the caption. Describe, in this order: the main subject (appearance, hair, clothing, accessories, facial expression, pose and action), other notable objects, the setting and background, lighting, colors and atmosphere, camera angle, framing and composition (e.g. close-up, medium shot, full body), and finally the style or medium (e.g. photograph, digital illustration, 3D render, anime). Be objective and specific; only describe what is visible. Do not guess identities, names, ages or emotions that are not clearly shown. If there is readable text in the image, quote it exactly. Output only the caption.",
+    "ExtraSystemPrompt": "",
+    "TriggerWord": "",
+    "MaxParallel": 2,
+    "MaxRetries": 3
+  }
+}

@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.9.0" />
+    <PackageReference Include="xunit.v3" Version="3.2.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <Compile Include="../TestSupport/Png.cs" Link="Png.cs" />
+    <Compile Include="../TestSupport/StubEndpoint.cs" Link="StubEndpoint.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Loralei.DatasetMaker/Loralei.DatasetMaker.csproj" />
+  </ItemGroup>
+</Project>

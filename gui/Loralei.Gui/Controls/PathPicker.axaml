@@ -1,0 +1,17 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="using:Loralei.Gui.Controls"
+             xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="Loralei.Gui.Controls.PathPicker">
+  <Grid ColumnDefinitions="*,Auto">
+    <TextBox Grid.Column="0"
+             Text="{Binding $parent[controls:PathPicker].Path, Mode=TwoWay}"
+             PlaceholderText="{Binding $parent[controls:PathPicker].PlaceholderText}" />
+    <Button Grid.Column="1" Margin="6,0,0,0" Click="Browse" ToolTip.Tip="Browse...">
+      <StackPanel Orientation="Horizontal" Spacing="6">
+        <icons:MaterialIcon Kind="FolderOpen" Width="15" Height="15" VerticalAlignment="Center" />
+        <TextBlock Text="Browse" VerticalAlignment="Center" />
+      </StackPanel>
+    </Button>
+  </Grid>
+</UserControl>

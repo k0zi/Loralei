@@ -1,0 +1,281 @@
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using Avalonia.Threading;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using Loralei.DatasetMaker.Captioning;
+using Loralei.DatasetMaker.Config;
+using Loralei.DatasetMaker.Processing;
+using Loralei.Core;
+using Material.Icons;
+
+namespace Loralei.Gui.ViewModels;
+
+/// <summary>
+/// The front end of the <c>Loralei.DatasetMaker</c> project: writes a <c>.txt</c> caption beside every
+/// image in a folder, by asking a vision model behind an OpenAI-compatible endpoint.
+/// <para>
+/// Loralei.DatasetMaker was a command-line tool. Its arguments and its <c>appsettings.json</c> are the
+/// fields of this page, and what it printed goes to the shared output pane.
+/// </para>
+/// <para>
+/// This is the one page that talks to a network endpoint itself. It takes the command lock
+/// all the same: the endpoint is usually a local model on the same cards a training run wants.
+/// </para>
+/// </summary>
+public sealed partial class CaptionViewModel : PageViewModel
+{
+    public override string Title => "Caption";
+    public override MaterialIconKind Icon => MaterialIconKind.ImageText;
+    public override string Blurb =>
+        "Write a .txt caption beside every image in a folder, using a vision model behind an OpenAI-compatible endpoint.";
+
+    /// <summary>Kept beside our own settings, so <c>LORALEI_GUI_SETTINGS</c> moves both.</summary>
+    public static string SettingsPath =>
+        Path.Combine(Path.GetDirectoryName(GuiSettings.DefaultPath) ?? "", "dataset-maker.json");
+
+    private readonly ConfigStore _store = new(SettingsPath);
+    private bool _dirty;
+
+    public string[] ImageDetailOptions { get; } = ["high", "low", "auto"];
+
+    /// <summary>Images that failed in the last run, with the reason.</summary>
+    public ObservableCollection<string> Failures { get; } = [];
+
+    [ObservableProperty] private string _dataset = "";
+
+    /// <summary>Not remembered: replacing captions someone may have edited by hand is opted into per run.</summary>
+    [ObservableProperty] private bool _overwrite;
+
+    // The endpoint.
+    [ObservableProperty] private string _baseUrl = "";
+    [ObservableProperty] private string _apiKey = "";
+    [ObservableProperty] private string _model = "";
+    [ObservableProperty] private int _maxTokens;
+    [ObservableProperty] private double _temperature;
+    [ObservableProperty] private int _timeoutSeconds;
+    [ObservableProperty] private string _imageDetail = "high";
+
+    // The captions.
+    [ObservableProperty] private string _systemPrompt = "";
+    [ObservableProperty] private string _extraContext = "";
+    [ObservableProperty] private string _triggerWord = "";
+    [ObservableProperty] private int _maxParallel;
+    [ObservableProperty] private int _maxRetries;
+
+    // The run.
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasProgress))] private int _total;
+    [ObservableProperty] private int _done;
+    [ObservableProperty] private int _succeeded;
+    [ObservableProperty] private int _skipped;
+    [ObservableProperty] private int _failed;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasLastCaption))] private string? _lastCaption;
+    [ObservableProperty] private string? _lastImage;
+
+    public bool HasProgress => Total > 0;
+    public bool HasLastCaption => !string.IsNullOrEmpty(LastCaption);
+
+    public CaptionViewModel(MainWindowViewModel shell) : base(shell)
+    {
+        var config = _store.Load();
+        BaseUrl = config.OpenAI.BaseUrl;
+        ApiKey = config.OpenAI.ApiKey;
+        Model = config.OpenAI.Model;
+        MaxTokens = config.OpenAI.MaxTokens;
+        Temperature = config.OpenAI.Temperature;
+        TimeoutSeconds = config.OpenAI.TimeoutSeconds;
+        ImageDetail = ImageDetailOptions.Contains(config.OpenAI.ImageDetail) ? config.OpenAI.ImageDetail : "high";
+        SystemPrompt = config.Caption.SystemPrompt;
+        ExtraContext = config.Caption.ExtraSystemPrompt;
+        TriggerWord = config.Caption.TriggerWord;
+        MaxParallel = config.Caption.MaxParallel;
+        MaxRetries = config.Caption.MaxRetries;
+        _dirty = false;
+    }
+
+    public override Task<bool> ActivateAsync()
+    {
+        if (Dataset.Length == 0) Dataset = Shell.Settings.LastDataset ?? "";
+        return Task.FromResult(true);
+    }
+
+    /// <summary>Everything on the page that is remembered, in the shape Loralei.DatasetMaker's config file always had.</summary>
+    public AppConfig CurrentConfig => new()
+    {
+        OpenAI = new OpenAiOptions
+        {
+            BaseUrl = BaseUrl.Trim(),
+            ApiKey = ApiKey.Trim(),
+            Model = Model.Trim(),
+            MaxTokens = MaxTokens,
+            Temperature = Temperature,
+            TimeoutSeconds = TimeoutSeconds,
+            ImageDetail = ImageDetail,
+        },
+        Caption = new CaptionOptions
+        {
+            SystemPrompt = string.IsNullOrWhiteSpace(SystemPrompt) ? CaptionOptions.DefaultSystemPrompt : SystemPrompt,
+            ExtraSystemPrompt = ExtraContext,
+            TriggerWord = TriggerWord.Trim(),
+            MaxParallel = MaxParallel,
+            MaxRetries = MaxRetries,
+        },
+    };
+
+    private static readonly HashSet<string> Remembered =
+    [
+        nameof(BaseUrl), nameof(ApiKey), nameof(Model), nameof(MaxTokens), nameof(Temperature),
+        nameof(TimeoutSeconds), nameof(ImageDetail), nameof(SystemPrompt), nameof(ExtraContext),
+        nameof(TriggerWord), nameof(MaxParallel), nameof(MaxRetries),
+    ];
+
+    protected override void OnPropertyChanged(PropertyChangedEventArgs e)
+    {
+        base.OnPropertyChanged(e);
+        if (e.PropertyName is { } name && Remembered.Contains(name)) _dirty = true;
+    }
+
+    /// <summary>Writes the fields out, if any changed. Untouched, the page leaves no file behind.</summary>
+    public override void Persist()
+    {
+        if (!_dirty) return;
+        _store.Save(CurrentConfig);
+        _dirty = false;
+    }
+
+    [RelayCommand]
+    private void ResetSystemPrompt() => SystemPrompt = CaptionOptions.DefaultSystemPrompt;
+
+    /// <summary>The old <c>--dry-run</c>: lists what would be captioned and sends nothing.</summary>
+    [RelayCommand]
+    private Task Preview() => RunAsync(dryRun: true);
+
+    [RelayCommand]
+    private Task Caption() => RunAsync(dryRun: false);
+
+    private async Task RunAsync(bool dryRun)
+    {
+        Clear();
+        if (!Directory.Exists(Dataset))
+        {
+            Error = "Pick a dataset folder first.";
+            return;
+        }
+        if (Problem() is { } problem)
+        {
+            Error = problem;
+            return;
+        }
+
+        Shell.Settings.LastDataset = Dataset;
+        Shell.Settings.Save();
+        Persist();
+
+        var config = CurrentConfig;
+        var endpoint = config.OpenAI with { ApiKey = ConfigStore.ResolveApiKey(config.OpenAI.ApiKey) };
+        var settings = new ProcessorSettings(
+            SystemPrompt: PromptBuilder.BuildSystemPrompt(config.Caption.SystemPrompt, ExtraContext),
+            TriggerWord: config.Caption.TriggerWord,
+            Overwrite: Overwrite,
+            MaxParallel: MaxParallel,
+            MaxRetries: MaxRetries,
+            DryRun: dryRun);
+        var directory = Dataset;
+
+        await Shell.RunExclusiveAsync(dryRun ? "caption preview" : "caption", async ct =>
+        {
+            ResetProgress();
+            Shell.Log.AppendCommand(dryRun
+                ? $"caption preview: {directory}"
+                : $"caption: {directory}  endpoint: {endpoint.BaseUrl}  model: {endpoint.Model}");
+            Status = dryRun ? "Scanning..." : "Captioning...";
+
+            try
+            {
+                using var client = new OpenAiCaptionClient(endpoint);
+                // Events come from the worker threads; the page and the log belong to this one.
+                var processor = new DatasetProcessor(client, settings,
+                    e => Dispatcher.UIThread.Post(() => OnEvent(e)));
+
+                var summary = await Task.Run(() => processor.RunAsync(directory, ct), ct);
+                await DrainEventsAsync();
+
+                Total = summary.Total;
+                Status = Describe(summary, dryRun, directory);
+                Shell.Log.AppendNote(Status);
+            }
+            catch (OperationCanceledException)
+            {
+                await DrainEventsAsync();
+                Status = $"Cancelled after {Succeeded} caption(s). The ones already written are kept.";
+                Shell.Log.AppendNote(Status);
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            {
+                Error = $"Could not read the folder: {e.Message}";
+                Status = null;
+            }
+        });
+    }
+
+    /// <summary>What stops a run before it starts, or null. A bad value here would otherwise fail once per image.</summary>
+    private string? Problem()
+    {
+        if (!Uri.TryCreate(BaseUrl.Trim(), UriKind.Absolute, out var uri) ||
+            (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+            return "The endpoint must be an http(s) URL, e.g. http://127.0.0.1:8080/v1.";
+        if (string.IsNullOrWhiteSpace(Model)) return "Name the model to ask.";
+        if (MaxTokens < 1) return "Max tokens must be at least 1.";
+        if (TimeoutSeconds < 1) return "The timeout must be at least 1 second.";
+        if (MaxRetries < 0) return "Retries cannot be negative.";
+        return null;
+    }
+
+    private void ResetProgress()
+    {
+        Failures.Clear();
+        Total = Done = Succeeded = Skipped = Failed = 0;
+        LastCaption = LastImage = null;
+    }
+
+    private void OnEvent(ProcessingEvent e)
+    {
+        Shell.Log.AppendNote(e.ToString());
+        Total = e.Total;
+
+        switch (e.Status)
+        {
+            case ItemStatus.Retrying:
+                return; // not finished; it reports again
+            case ItemStatus.Ok:
+                Succeeded++;
+                LastImage = Path.GetFileName(e.Image);
+                LastCaption = e.Caption;
+                break;
+            case ItemStatus.Skipped:
+                Skipped++;
+                break;
+            case ItemStatus.Failed:
+                Failed++;
+                Failures.Add($"{e.Image}: {e.Detail}");
+                break;
+        }
+        Done++;
+    }
+
+    /// <summary>
+    /// Waits for the events already posted. They queue at the same priority as this, so by
+    /// the time it runs they have all been applied and the counters are final.
+    /// </summary>
+    private static async Task DrainEventsAsync() =>
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Default);
+
+    private static string Describe(ProcessingSummary summary, bool dryRun, string directory)
+    {
+        if (summary.Total == 0) return $"No images found in {directory}.";
+        if (dryRun)
+            return $"{summary.Total - summary.Skipped} of {summary.Total} image(s) would be captioned; " +
+                   $"{summary.Skipped} skipped. Nothing was sent.";
+        return $"Done. Captioned {summary.Succeeded}, skipped {summary.Skipped}, failed {summary.Failed}.";
+    }
+}

@@ -1,0 +1,17 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:rice="clr-namespace:KD.Avalonia.Rice;assembly=KD.Avalonia.Rice"
+             xmlns:local="using:Loralei.Gui"
+             x:Class="Loralei.Gui.App">
+  <!-- No RequestedThemeVariant here on purpose: ThemeService owns the variant. -->
+  <Application.DataTemplates>
+    <local:ViewLocator />
+  </Application.DataTemplates>
+
+  <Application.Styles>
+    <!-- Brings FluentTheme and MaterialIconStyles with it. -->
+    <rice:RiceStyles />
+    <!-- Last, so our own styles can still override the theme's. -->
+    <StyleInclude Source="avares://Loralei.Gui/Styles.axaml" />
+  </Application.Styles>
+</Application>

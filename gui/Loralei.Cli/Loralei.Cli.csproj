@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The `loralei` command. Everything it knows lives in Loralei.Core; this project only
+       parses arguments and prints. The GUI drives this same executable as a child process. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>loralei</AssemblyName>
+    <RootNamespace>Loralei.Cli</RootNamespace>
+    <Version>0.2.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Loralei.Core/Loralei.Core.csproj" />
+  </ItemGroup>
+</Project>

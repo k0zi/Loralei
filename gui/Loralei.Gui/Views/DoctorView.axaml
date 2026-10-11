@@ -1,0 +1,88 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Loralei.Gui.ViewModels"
+             xmlns:dto="using:Loralei.Core.Dto"
+             xmlns:gui="using:Loralei.Gui"
+             xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="Loralei.Gui.Views.DoctorView"
+             x:DataType="vm:DoctorViewModel">
+  <StackPanel Spacing="12">
+
+    <StackPanel Orientation="Horizontal" Spacing="10">
+      <Button  Command="{Binding RunCommand}"
+              IsEnabled="{Binding !Shell.IsBusy}" >
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <icons:MaterialIcon Kind="Stethoscope" Width="15" Height="15" VerticalAlignment="Center" />
+          <TextBlock Text="Run checks" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+      <CheckBox Content="Thorough (longer benchmarks and torture tests)"
+                IsChecked="{Binding Thorough}" VerticalAlignment="Center" />
+      <Button  Command="{Binding ShowFixCommand}"
+              IsEnabled="{Binding !Shell.IsBusy}" >
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <icons:MaterialIcon Kind="ScriptText" Width="15" Height="15" VerticalAlignment="Center" />
+          <TextBlock Text="Show env snippet" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+      <TextBlock VerticalAlignment="Center" Classes="subtle"
+                 Text="{Binding Version, StringFormat='loralei {0}'}" />
+    </StackPanel>
+
+    <Border Classes="panel" IsVisible="{Binding Checks.Count}">
+      <StackPanel>
+        <Grid ColumnDefinitions="92,180,*" Margin="0,0,0,4">
+          <TextBlock Grid.Column="0" Classes="tableHeader" Text="status" />
+          <TextBlock Grid.Column="1" Classes="tableHeader" Text="check" />
+          <TextBlock Grid.Column="2" Classes="tableHeader" Text="detail" />
+        </Grid>
+        <ItemsControl ItemsSource="{Binding Checks}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="dto:DoctorCheck">
+              <Grid ColumnDefinitions="92,180,*" Margin="0,3">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="5">
+                  <icons:MaterialIcon Width="15" Height="15" VerticalAlignment="Center"
+                                      Kind="{Binding Status, Converter={x:Static gui:Converters.StatusIcon}}"
+                                      Foreground="{Binding Status, Converter={x:Static gui:Converters.StatusBrush}}" />
+                  <TextBlock FontWeight="SemiBold" VerticalAlignment="Center"
+                             Text="{Binding Status, Converter={x:Static gui:Converters.StatusMark}}"
+                             Foreground="{Binding Status, Converter={x:Static gui:Converters.StatusBrush}}" />
+                </StackPanel>
+                <TextBlock Grid.Column="1" Text="{Binding Name}" Margin="0,0,12,0" />
+                <StackPanel Grid.Column="2">
+                  <TextBlock Text="{Binding Detail}" TextWrapping="Wrap" />
+                  <TextBlock Classes="subtle mono" Text="{Binding Remedy}" TextWrapping="Wrap"
+                             IsVisible="{Binding Remedy, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                </StackPanel>
+              </Grid>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+    </Border>
+
+    <Expander Header="Environment applied before torch was imported"
+              IsVisible="{Binding Environment.Count}">
+      <ItemsControl ItemsSource="{Binding Environment}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <Grid ColumnDefinitions="320,*" Margin="0,2">
+              <TextBlock Grid.Column="0" Classes="mono" Text="{Binding Key}" />
+              <TextBlock Grid.Column="1" Classes="mono subtle" Text="{Binding Value}" />
+            </Grid>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </Expander>
+
+    <Expander Header="Shell snippet"
+              IsVisible="{Binding FixSnippet, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+      <SelectableTextBlock Classes="mono" Text="{Binding FixSnippet}" TextWrapping="Wrap" />
+    </Expander>
+
+    <TextBlock Classes="subtle" Text="{Binding Status}"
+               IsVisible="{Binding Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+    <SelectableTextBlock Foreground="{DynamicResource FailBrush}" Text="{Binding Error}" TextWrapping="Wrap"
+                         IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+  </StackPanel>
+</UserControl>

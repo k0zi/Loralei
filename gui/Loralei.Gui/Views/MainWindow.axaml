@@ -1,0 +1,89 @@
+<rice:RiceWindow xmlns="https://github.com/avaloniaui"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:rice="clr-namespace:KD.Avalonia.Rice.Controls;assembly=KD.Avalonia.Rice"
+                 xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+                 xmlns:vm="using:Loralei.Gui.ViewModels"
+                 x:Class="Loralei.Gui.Views.MainWindow"
+                 x:DataType="vm:MainWindowViewModel"
+                 Title="Loralei" Icon="/Assets/loralei.png" Width="1280" Height="880" MinWidth="960" MinHeight="620"
+                 ShowSettingsButton="True" ShowAboutButton="True"
+                 SettingsRequested="OnSettingsRequested">
+
+  <rice:RiceWindow.TitleBarContent>
+    <DockPanel>
+      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="8"
+                  VerticalAlignment="Center" Margin="0,0,8,0">
+        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center"
+                    IsVisible="{Binding IsBusy}">
+          <icons:MaterialIcon Kind="ProgressClock" Width="16" Height="16"
+                              Foreground="{DynamicResource WarnBrush}" />
+          <TextBlock VerticalAlignment="Center" Foreground="{DynamicResource WarnBrush}"
+                     Text="{Binding BusyWith, StringFormat='running {0}...'}" />
+        </StackPanel>
+        <Button Command="{Binding CancelCommand}" IsVisible="{Binding IsBusy}"
+                Padding="8,2" ToolTip.Tip="Interrupt (SIGINT)">
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <icons:MaterialIcon Kind="StopCircle" Width="16" Height="16" />
+            <TextBlock Text="Interrupt" />
+          </StackPanel>
+        </Button>
+      </StackPanel>
+
+      <TextBlock Classes="mono subtle" VerticalAlignment="Center" TextWrapping="NoWrap"
+                 TextTrimming="CharacterEllipsis"
+                 Text="{Binding Paths.Workspace}" ToolTip.Tip="{Binding Paths.Executable}" />
+    </DockPanel>
+  </rice:RiceWindow.TitleBarContent>
+
+  <Grid RowDefinitions="*,Auto,Auto">
+
+    <DockPanel Grid.Row="0">
+      <rice:RiceSideMenu DockPanel.Dock="Left" ExpandedWidth="200"
+                         ItemsSource="{Binding Pages}" SelectedItem="{Binding SelectedPage}">
+        <!-- Scales down with the pane, so it stays visible when the menu is collapsed. -->
+        <rice:RiceSideMenu.Header>
+          <Image Source="/Assets/loralei.png" MaxWidth="128" Margin="6,10" Stretch="Uniform"
+                 HorizontalAlignment="Center" RenderOptions.BitmapInterpolationMode="HighQuality" />
+        </rice:RiceSideMenu.Header>
+        <!-- Menu entries only: the items are view models, so the container is told what
+             to show rather than left to run them through the ViewLocator. -->
+        <rice:RiceSideMenu.Styles>
+          <Style Selector="rice|RiceSideMenuItem" x:DataType="vm:PageViewModel">
+            <Setter Property="Icon" Value="{Binding Icon}" />
+            <Setter Property="Content" Value="{Binding Title}" />
+          </Style>
+        </rice:RiceSideMenu.Styles>
+      </rice:RiceSideMenu>
+
+      <!-- The page itself is the selected view model, which the ViewLocator turns into a
+           view and wraps in the shared page chrome. -->
+      <ContentControl Content="{Binding SelectedPage}" />
+    </DockPanel>
+
+    <GridSplitter Grid.Row="1" Height="4" ResizeDirection="Rows"
+                  Background="{DynamicResource RiceBorderBrush}" />
+
+    <!-- The shared output pane: the exact bytes loralei wrote, on every page. -->
+    <Border Grid.Row="2" Height="210" Background="{DynamicResource LogPaneBrush}"
+            BorderBrush="{DynamicResource RiceBorderBrush}" BorderThickness="0,1,0,0">
+      <Grid RowDefinitions="Auto,*">
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10" Margin="10,6">
+          <icons:MaterialIcon Kind="ConsoleLine" Width="16" Height="16" VerticalAlignment="Center" />
+          <TextBlock Text="Output" FontWeight="SemiBold" VerticalAlignment="Center" />
+          <Button Content="Clear" Command="{Binding Log.ClearCommand}" Padding="8,2"
+                  ToolTip.Tip="Clear the output pane" />
+          <CheckBox Content="Follow" IsChecked="{Binding Log.AutoScroll}" />
+        </StackPanel>
+        <ScrollViewer Grid.Row="1" Name="LogScroller" Padding="10,0,10,8">
+          <ItemsControl ItemsSource="{Binding Log.Lines}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <TextBlock Classes="mono" Text="{Binding}" TextWrapping="NoWrap" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+      </Grid>
+    </Border>
+  </Grid>
+</rice:RiceWindow>

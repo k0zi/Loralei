@@ -1,0 +1,11 @@
+<Solution>
+  <Project Path="Loralei.DatasetMaker.Tests/Loralei.DatasetMaker.Tests.csproj" />
+  <Project Path="Loralei.DatasetMaker/Loralei.DatasetMaker.csproj" />
+  <Project Path="Loralei.ImageResizer.Tests/Loralei.ImageResizer.Tests.csproj" />
+  <Project Path="Loralei.ImageResizer/Loralei.ImageResizer.csproj" />
+  <Project Path="Loralei.Cli/Loralei.Cli.csproj" />
+  <Project Path="Loralei.Core.Tests/Loralei.Core.Tests.csproj" />
+  <Project Path="Loralei.Core/Loralei.Core.csproj" />
+  <Project Path="Loralei.Gui.Tests/Loralei.Gui.Tests.csproj" />
+  <Project Path="Loralei.Gui/Loralei.Gui.csproj" />
+</Solution>

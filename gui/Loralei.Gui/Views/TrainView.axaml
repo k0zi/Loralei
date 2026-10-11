@@ -1,0 +1,353 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Loralei.Gui.ViewModels"
+             xmlns:controls="using:Loralei.Gui.Controls"
+             xmlns:gui="using:Loralei.Gui"
+             xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="Loralei.Gui.Views.TrainView"
+             x:DataType="vm:TrainViewModel">
+  <StackPanel Spacing="12">
+
+    <!-- Identity: the two things with no default. -->
+    <WrapPanel>
+      <StackPanel Classes="field" MinWidth="420">
+        <TextBlock Classes="fieldLabel" Text="Dataset folder" />
+        <controls:PathPicker Path="{Binding Dataset, Mode=TwoWay}" Title="Select the dataset folder"
+                             PlaceholderText="/path/to/my-dataset" />
+      </StackPanel>
+      <StackPanel Classes="field" MinWidth="220">
+        <TextBlock Classes="fieldLabel" Text="Name (of the LoRA and its run)" />
+        <TextBox Text="{Binding Name}" PlaceholderText="my-style" />
+      </StackPanel>
+    </WrapPanel>
+
+    <TabControl>
+      <TabItem Header="Basic">
+        <WrapPanel Margin="0,10,0,0">
+          <StackPanel Classes="field">
+            <TextBlock Classes="fieldLabel" Text="Model" />
+            <ComboBox ItemsSource="{Binding ModelOptions}" SelectedItem="{Binding Model}" MinWidth="150" />
+          </StackPanel>
+          <StackPanel Classes="field">
+            <TextBlock Classes="fieldLabel" Text="Profile" />
+            <ComboBox ItemsSource="{Binding ProfileOptions}" SelectedItem="{Binding Profile}" MinWidth="130" />
+          </StackPanel>
+          <StackPanel Classes="field">
+            <TextBlock Classes="fieldLabel" Text="Rank" />
+            <TextBox Text="{Binding Rank}" PlaceholderText="preset" />
+          </StackPanel>
+          <StackPanel Classes="field">
+            <TextBlock Classes="fieldLabel" Text="Steps" />
+            <TextBox Text="{Binding Steps}" PlaceholderText="preset" />
+          </StackPanel>
+          <StackPanel Classes="field">
+            <TextBlock Classes="fieldLabel" Text="Resolution (multiple of 16)" />
+            <TextBox Text="{Binding Resolution}" PlaceholderText="preset" />
+          </StackPanel>
+          <StackPanel Classes="field">
+            <TextBlock Classes="fieldLabel" Text="Learning rate" />
+            <TextBox Text="{Binding LearningRate}" PlaceholderText="preset" />
+          </StackPanel>
+          <StackPanel Classes="field">
+            <TextBlock Classes="fieldLabel" Text="Batch size" />
+            <TextBox Text="{Binding BatchSize}" PlaceholderText="1" />
+          </StackPanel>
+          <StackPanel Classes="field">
+            <TextBlock Classes="fieldLabel" Text="Optimizer" />
+            <ComboBox ItemsSource="{Binding OptimizerOptions}" SelectedItem="{Binding Optimizer}" MinWidth="140" />
+          </StackPanel>
+          <StackPanel Classes="field">
+            <TextBlock Classes="fieldLabel" Text="Seed" />
+            <TextBox Text="{Binding Seed}" PlaceholderText="42" />
+          </StackPanel>
+          <StackPanel Classes="field">
+            <TextBlock Classes="fieldLabel" Text="Trigger word" />
+            <TextBox Text="{Binding TriggerWord}" PlaceholderText="none" />
+          </StackPanel>
+          <StackPanel Classes="field">
+            <TextBlock Classes="fieldLabel" Text="GPU index" />
+            <TextBox Text="{Binding Gpu}" PlaceholderText="auto" />
+          </StackPanel>
+          <StackPanel Classes="field">
+            <TextBlock Classes="fieldLabel" Text="Save every N steps" />
+            <TextBox Text="{Binding SaveEvery}" PlaceholderText="preset" />
+          </StackPanel>
+        </WrapPanel>
+      </TabItem>
+
+      <TabItem Header="Memory">
+        <StackPanel Margin="0,10,0,0">
+          <WrapPanel>
+            <StackPanel Classes="field">
+              <TextBlock Classes="fieldLabel" Text="Blocks to swap" />
+              <TextBox Text="{Binding BlocksToSwap}" PlaceholderText="preset" />
+            </StackPanel>
+            <StackPanel Classes="field">
+              <TextBlock Classes="fieldLabel" Text="Swap prefetch" />
+              <TextBox Text="{Binding SwapPrefetch}" PlaceholderText="1" />
+            </StackPanel>
+            <StackPanel Classes="field">
+              <TextBlock Classes="fieldLabel" Text="Dtype" />
+              <ComboBox ItemsSource="{Binding DtypeOptions}" SelectedItem="{Binding Dtype}" MinWidth="120" />
+            </StackPanel>
+            <StackPanel Classes="field">
+              <TextBlock Classes="fieldLabel" Text="VAE device" />
+              <ComboBox ItemsSource="{Binding VaeDeviceOptions}" SelectedItem="{Binding VaeDevice}" MinWidth="120" />
+            </StackPanel>
+          </WrapPanel>
+          <StackPanel Spacing="6" Margin="0,4,0,0">
+            <CheckBox Content="fp8 base weights (float8_e4m3fn, dequantized per block)"
+                      IsChecked="{Binding Fp8Base}" IsThreeState="True" />
+            <CheckBox Content="Gradient checkpointing" IsChecked="{Binding GradientCheckpointing}" IsThreeState="True" />
+            <CheckBox Content="Pin swapped blocks in host memory" IsChecked="{Binding SwapPinMemory}" IsThreeState="True" />
+            <TextBlock Classes="subtle"
+                       Text="Indeterminate means &quot;leave it to the preset and profile&quot;." />
+          </StackPanel>
+        </StackPanel>
+      </TabItem>
+
+      <TabItem Header="Objective">
+        <WrapPanel Margin="0,10,0,0">
+          <StackPanel Classes="field">
+            <TextBlock Classes="fieldLabel" Text="Alpha" />
+            <TextBox Text="{Binding Alpha}" PlaceholderText="= rank" />
+          </StackPanel>
+          <StackPanel Classes="field">
+            <TextBlock Classes="fieldLabel" Text="LoRA dropout" />
+            <TextBox Text="{Binding LoraDropout}" PlaceholderText="0.0" />
+          </StackPanel>
+          <StackPanel Classes="field">
+            <TextBlock Classes="fieldLabel" Text="LR scheduler" />
+            <ComboBox ItemsSource="{Binding SchedulerOptions}" SelectedItem="{Binding LrScheduler}" MinWidth="190" />
+          </StackPanel>
+          <StackPanel Classes="field">
+            <TextBlock Classes="fieldLabel" Text="Warmup steps" />
+            <TextBox Text="{Binding WarmupSteps}" PlaceholderText="preset" />
+          </StackPanel>
+          <StackPanel Classes="field">
+            <TextBlock Classes="fieldLabel" Text="Grad accumulation" />
+            <TextBox Text="{Binding GradientAccumulationSteps}" PlaceholderText="1" />
+          </StackPanel>
+          <StackPanel Classes="field">
+            <TextBlock Classes="fieldLabel" Text="Max grad norm" />
+            <TextBox Text="{Binding MaxGradNorm}" PlaceholderText="1.0" />
+          </StackPanel>
+          <StackPanel Classes="field">
+            <TextBlock Classes="fieldLabel" Text="Timestep sampling" />
+            <ComboBox ItemsSource="{Binding TimestepOptions}" SelectedItem="{Binding TimestepSampling}" MinWidth="160" />
+          </StackPanel>
+          <StackPanel Classes="field">
+            <TextBlock Classes="fieldLabel" Text="Flow shift" />
+            <TextBox Text="{Binding FlowShift}" PlaceholderText="preset" />
+          </StackPanel>
+          <StackPanel Classes="field">
+            <TextBlock Classes="fieldLabel" Text="Weighting scheme" />
+            <ComboBox ItemsSource="{Binding WeightingOptions}" SelectedItem="{Binding WeightingScheme}" MinWidth="160" />
+          </StackPanel>
+        </WrapPanel>
+      </TabItem>
+
+      <TabItem Header="Data">
+        <StackPanel Margin="0,10,0,0">
+          <WrapPanel>
+            <StackPanel Classes="field">
+              <TextBlock Classes="fieldLabel" Text="Bucket step" />
+              <TextBox Text="{Binding BucketStep}" PlaceholderText="64" />
+            </StackPanel>
+            <StackPanel Classes="field">
+              <TextBlock Classes="fieldLabel" Text="Caption extension" />
+              <TextBox Text="{Binding CaptionExtension}" PlaceholderText=".txt" />
+            </StackPanel>
+            <StackPanel Classes="field">
+              <TextBlock Classes="fieldLabel" Text="Caption dropout (0-1)" />
+              <TextBox Text="{Binding CaptionDropout}" PlaceholderText="0.0" />
+            </StackPanel>
+            <StackPanel Classes="field">
+              <TextBlock Classes="fieldLabel" Text="Repeats" />
+              <TextBox Text="{Binding Repeats}" PlaceholderText="1" />
+            </StackPanel>
+            <StackPanel Classes="field">
+              <TextBlock Classes="fieldLabel" Text="DataLoader workers" />
+              <TextBox Text="{Binding NumWorkers}" PlaceholderText="2" />
+            </StackPanel>
+            <StackPanel Classes="field">
+              <TextBlock Classes="fieldLabel" Text="Log every N steps" />
+              <TextBox Text="{Binding LogEvery}" PlaceholderText="10" />
+            </StackPanel>
+          </WrapPanel>
+          <CheckBox Content="Aspect-ratio bucketing" IsChecked="{Binding Bucketing}" IsThreeState="True" />
+        </StackPanel>
+      </TabItem>
+
+      <TabItem Header="Sampling">
+        <StackPanel Margin="0,10,0,0" Spacing="6">
+          <WrapPanel>
+            <StackPanel Classes="field">
+              <TextBlock Classes="fieldLabel" Text="Render every N steps (0 = off)" />
+              <TextBox Text="{Binding SampleEvery}" PlaceholderText="0" />
+            </StackPanel>
+            <StackPanel Classes="field">
+              <TextBlock Classes="fieldLabel" Text="Steps" />
+              <TextBox Text="{Binding SampleSteps}" PlaceholderText="preset" />
+            </StackPanel>
+            <StackPanel Classes="field">
+              <TextBlock Classes="fieldLabel" Text="CFG" />
+              <TextBox Text="{Binding SampleCfg}" PlaceholderText="preset" />
+            </StackPanel>
+            <StackPanel Classes="field">
+              <TextBlock Classes="fieldLabel" Text="Sample GPU (must differ)" />
+              <TextBox Text="{Binding SampleGpu}" PlaceholderText="none" />
+            </StackPanel>
+          </WrapPanel>
+          <TextBlock Classes="fieldLabel" Text="Prompts, one per line" />
+          <TextBox Text="{Binding SamplePrompts}" AcceptsReturn="True" Height="90"
+                   PlaceholderText="a photo of sks style, a cat on a roof" />
+          <TextBlock Classes="subtle"
+                     Text="Renders run detached on the other card, so the training loop is not slowed." />
+        </StackPanel>
+      </TabItem>
+    </TabControl>
+
+    <!-- Exactly what will run, and exactly what will be written. -->
+    <Expander Header="What will run">
+      <StackPanel Spacing="8">
+        <TextBlock Classes="fieldLabel" Text="Command" />
+        <SelectableTextBlock Classes="mono" Text="{Binding CommandPreview}" TextWrapping="Wrap" />
+        <TextBlock Classes="fieldLabel"
+                   Text="loralei.yaml in the workspace (carries every setting with no CLI flag)" />
+        <SelectableTextBlock Classes="mono" Text="{Binding YamlPreview}" TextWrapping="NoWrap" />
+      </StackPanel>
+    </Expander>
+
+    <StackPanel Orientation="Horizontal" Spacing="10">
+      <Button  Command="{Binding RefreshPreviewCommand}" >
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <icons:MaterialIcon Kind="RefreshCircle" Width="15" Height="15" VerticalAlignment="Center" />
+          <TextBlock Text="Refresh preview" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+      <Button  Command="{Binding DryRunCommand}" IsEnabled="{Binding !Shell.IsBusy}" >
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <icons:MaterialIcon Kind="Calculator" Width="15" Height="15" VerticalAlignment="Center" />
+          <TextBlock Text="Dry run" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+      <Button  Command="{Binding StartCommand}"
+              IsEnabled="{Binding !Shell.IsBusy}" Classes="accent" >
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <icons:MaterialIcon Kind="PlayArrow" Width="15" Height="15" VerticalAlignment="Center" />
+          <TextBlock Text="Start training" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+      <Button  Command="{Binding ResumeCommand}" IsEnabled="{Binding CanResume}" >
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <icons:MaterialIcon Kind="PlayBoxOutline" Width="15" Height="15" VerticalAlignment="Center" />
+          <TextBlock Text="Resume" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+      <Button  Command="{Binding Shell.CancelCommand}"
+              IsVisible="{Binding Shell.IsBusy}" >
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <icons:MaterialIcon Kind="StopCircle" Width="15" Height="15" VerticalAlignment="Center" />
+          <TextBlock Text="Interrupt" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+    </StackPanel>
+
+    <Border Classes="panel" BorderBrush="{DynamicResource WarnBrush}" IsVisible="{Binding CheckpointWarning}">
+      <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource WarnBrush}"
+                 Text="Save every is 0, so only the final adapter is written. If this run is interrupted or fails, nothing is recoverable and it cannot be resumed." />
+    </Border>
+
+    <Border Classes="panel"
+            IsVisible="{Binding Estimate, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+      <StackPanel Spacing="4">
+        <TextBlock Classes="mono" Text="{Binding Estimate}" TextWrapping="Wrap" />
+        <TextBlock Classes="mono subtle" Text="{Binding CacheStatus}" TextWrapping="Wrap" />
+        <TextBlock Foreground="{DynamicResource FailBrush}" TextWrapping="Wrap" IsVisible="{Binding OverBudget}"
+                   Text="This does not fit the card. Raise blocks to swap, or enable fp8 base weights." />
+      </StackPanel>
+    </Border>
+
+    <!-- Live region. -->
+    <Border Classes="panel"
+            IsVisible="{Binding RunState, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+      <StackPanel Spacing="8">
+        <Grid ColumnDefinitions="*,Auto">
+          <TextBlock Grid.Column="0" FontWeight="SemiBold"
+                     Text="{Binding RunState}"
+                     Foreground="{Binding RunState, Converter={x:Static gui:Converters.StatusBrush}}" />
+          <TextBlock Grid.Column="1" Classes="mono"
+                     Text="{Binding Progress, Converter={x:Static gui:Converters.Percent}}" />
+        </Grid>
+
+        <ProgressBar Minimum="0" Maximum="1" Value="{Binding Progress}" Height="6" />
+
+        <WrapPanel>
+          <StackPanel Classes="field" MinWidth="110">
+            <TextBlock Classes="fieldLabel" Text="step" />
+            <TextBlock Classes="mono" Text="{Binding Step}" />
+          </StackPanel>
+          <StackPanel Classes="field" MinWidth="110">
+            <TextBlock Classes="fieldLabel" Text="of" />
+            <TextBlock Classes="mono" Text="{Binding MaxSteps}" />
+          </StackPanel>
+          <StackPanel Classes="field" MinWidth="110">
+            <TextBlock Classes="fieldLabel" Text="loss" />
+            <TextBlock Classes="mono" Text="{Binding Loss, Converter={x:Static gui:Converters.Loss}}" />
+          </StackPanel>
+          <StackPanel Classes="field" MinWidth="130">
+            <TextBlock Classes="fieldLabel" Text="peak VRAM" />
+            <TextBlock Classes="mono" Text="{Binding VramGib, Converter={x:Static gui:Converters.Vram}}" />
+          </StackPanel>
+          <StackPanel Classes="field" MinWidth="110">
+            <TextBlock Classes="fieldLabel" Text="elapsed" />
+            <TextBlock Classes="mono" Text="{Binding Elapsed}" />
+          </StackPanel>
+          <StackPanel Classes="field" MinWidth="110">
+            <TextBlock Classes="fieldLabel" Text="eta" />
+            <TextBlock Classes="mono" Text="{Binding Eta}" />
+          </StackPanel>
+        </WrapPanel>
+
+        <controls:LossChart Series="{Binding LossSeries}" Height="190" />
+
+        <StackPanel IsVisible="{Binding Checkpoints.Count}">
+          <TextBlock Classes="fieldLabel" Text="checkpoints" />
+          <ItemsControl ItemsSource="{Binding Checkpoints}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <TextBlock Classes="mono subtle" Text="{Binding}" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+
+        <StackPanel IsVisible="{Binding SampleImages.Count}">
+          <TextBlock Classes="fieldLabel" Text="validation renders" />
+          <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+            <ItemsControl ItemsSource="{Binding SampleImages}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="6" /></ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Image Source="{Binding}" Height="150" Stretch="Uniform" />
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+        </StackPanel>
+
+        <SelectableTextBlock Classes="mono" Foreground="{DynamicResource OkBrush}"
+                             Text="{Binding FinalAdapter}"
+                             IsVisible="{Binding FinalAdapter, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+      </StackPanel>
+    </Border>
+
+    <TextBlock Classes="subtle" Text="{Binding Status}"
+               IsVisible="{Binding Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+    <SelectableTextBlock Foreground="{DynamicResource FailBrush}" Text="{Binding Error}" TextWrapping="Wrap"
+                         IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+  </StackPanel>
+</UserControl>
