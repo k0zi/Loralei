@@ -64,6 +64,13 @@ public class ModelResolverTests : IDisposable
     }
 
     [Fact]
+    public void AMirrorRepoCountsAsTheModel()
+    {
+        HubModel("hub", "unsloth/Krea-2-Raw");
+        Assert.True(ModelResolver.Resolve(ModelRegistry.Krea2Raw, Roots("hub")).Complete);
+    }
+
+    [Fact]
     public void RootsAreCombinedComponentByComponent()
     {
         // One root has only the transformer, another has the rest - a real situation when

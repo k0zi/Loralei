@@ -87,7 +87,8 @@ public static class ModelRegistry
             Unproven,
         ]);
 
-    private static readonly string[] KreaRepo = ["krea/Krea-2-Raw"];
+    // unsloth's mirror is ungated and file-for-file the same as Krea's own repo.
+    private static readonly string[] KreaRepo = ["krea/Krea-2-Raw", "unsloth/Krea-2-Raw"];
 
     public static readonly ModelSpec Krea2Raw = new(
         Key: "krea-2-raw",
