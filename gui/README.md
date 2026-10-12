@@ -52,8 +52,9 @@ for it can.
 `loralei train` has CLI flags for only about a third of `RunConfig`. There is no `--config`
 flag, and the CLI reads `loralei.yaml` **from its working directory**. So the GUI:
 
-1. treats one directory as the *workspace* — the one holding `loralei.yaml`, found by walking up
-   from the executable, and overridable in settings;
+1. treats one directory as the *workspace* — the one holding `loralei.yaml` (or, on a fresh
+   checkout, the `loralei.example.yaml` it is copied from), found by walking up from the
+   executable, and overridable in settings;
 2. writes the flagless settings into `<workspace>/loralei.yaml`;
 3. launches every child process with that directory as its working directory.
 

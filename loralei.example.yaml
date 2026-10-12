@@ -1,0 +1,16 @@
+# Project settings for loralei. Copy this file to loralei.yaml and edit the copy:
+#
+#   cp loralei.example.yaml loralei.yaml
+#
+# loralei.yaml is read from the working directory, is ignored by git, and is where the GUI
+# writes the settings that have no command-line flag. A key that is not known is an error.
+
+# Where the base models live. A single path or a list; Hugging Face cache layout
+# (models--org--repo/snapshots/...) and plain <root>/<model>/<component> both work.
+# Downloads land in the first root. Left out, the standard Hugging Face cache is used.
+#models_dir:
+#  - ~/models/hub
+
+sample_every: 0
+sample_prompts:
+  - "a photo of sks pattern on a wooden table"

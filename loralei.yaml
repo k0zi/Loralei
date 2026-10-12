@@ -1,9 +1,0 @@
-# Where the base models live. A single path or a list; Hugging Face cache layout
-# (models--org--repo/snapshots/...) and plain <root>/<model>/<component> both work.
-models_dir:
-  - ~/Develop/ai-models/unsloth/hub
-  - ~/Develop/ai-toolkit/hf-cache/huggingface/hub
-
-sample_every: 0
-sample_prompts:
-  - "a photo of sks pattern on a wooden table"

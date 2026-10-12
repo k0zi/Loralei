@@ -90,6 +90,9 @@ uv pip install --index-url https://download.pytorch.org/whl/rocm7.1 \
 uv pip install -e .
 uv pip install bitsandbytes          # optional: 8-bit Adam
 
+# your settings: loralei.yaml is yours and ignored by git
+cp loralei.example.yaml loralei.yaml
+
 # the CLI
 dotnet publish gui/Loralei.Cli -c Release -o ~/.local/share/loralei
 ln -s ~/.local/share/loralei/loralei ~/.local/bin/loralei
