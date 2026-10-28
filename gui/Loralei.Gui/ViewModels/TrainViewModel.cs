@@ -15,6 +15,8 @@ public sealed partial class TrainViewModel : PageViewModel
     private TrainEventTailer? _tailer;
     private DispatcherTimer? _poll;
     private DateTimeOffset _startedAt;
+    private Recommendation _applied = Recommendation.None;
+    private int _countVersion;
 
     public TrainViewModel(MainWindowViewModel shell) : base(shell)
     {
@@ -33,6 +35,11 @@ public sealed partial class TrainViewModel : PageViewModel
     public string[] SchedulerOptions => LoraleiVocabulary.LrSchedulers;
     public string[] TimestepOptions => LoraleiVocabulary.TimestepSamplings;
     public string[] WeightingOptions => LoraleiVocabulary.WeightingSchemes;
+    public string[] LoraKindOptions => LoraleiVocabulary.LoraKinds;
+    public string[] LengthUnitOptions { get; } = [StepsUnit, EpochsUnit];
+
+    private const string StepsUnit = "Steps";
+    private const string EpochsUnit = "Epochs";
 
     // --- basics ---------------------------------------------------------------
     [ObservableProperty] private string _dataset = "";
@@ -41,6 +48,11 @@ public sealed partial class TrainViewModel : PageViewModel
     [ObservableProperty] private string _profile = "balanced";
     [ObservableProperty] private int? _rank;
     [ObservableProperty] private int? _steps;
+    [ObservableProperty] private int? _epochs;
+    [ObservableProperty] private string _lengthUnit = StepsUnit;
+    [ObservableProperty] private string _loraKind = Recommender.Custom;
+    [ObservableProperty] private int _imageCount;
+    [ObservableProperty] private string _recommendationSummary = "";
     [ObservableProperty] private int? _resolution;
     [ObservableProperty] private double? _learningRate;
     [ObservableProperty] private int? _batchSize;
@@ -119,6 +131,33 @@ public sealed partial class TrainViewModel : PageViewModel
     /// </summary>
     public bool CheckpointWarning => SaveEvery is 0;
 
+    public bool ByEpochs => LengthUnit == EpochsUnit;
+
+    private int StepsPerEpoch => Recommender.StepsPerEpoch(ImageCount, Repeats ?? 1, BatchSize ?? 1);
+
+    /// <summary>
+    /// The step count the run is given. Loralei only knows steps, so an epoch count is turned
+    /// into one here, from the images in the dataset folder, the repeats and the batch size.
+    /// </summary>
+    public int? EffectiveSteps => !ByEpochs
+        ? Steps
+        : Epochs is { } epochs && StepsPerEpoch > 0
+            ? Recommender.StepsForEpochs(epochs, ImageCount, Repeats ?? 1, BatchSize ?? 1)
+            : null;
+
+    public string LengthSummary
+    {
+        get
+        {
+            if (ImageCount == 0) return ByEpochs ? "no images found in the dataset folder" : "";
+            var perEpoch = $"{ImageCount} images, {StepsPerEpoch} steps per epoch";
+            if (ByEpochs) return EffectiveSteps is { } steps ? $"= {steps} steps ({perEpoch})" : perEpoch;
+            return Steps is { } set
+                ? $"= {(double)set / StepsPerEpoch:0.#} epochs ({perEpoch})"
+                : perEpoch;
+        }
+    }
+
     public override Task<bool> ActivateAsync()
     {
         if (Dataset.Length == 0) Dataset = Shell.Settings.LastDataset ?? "";
@@ -176,6 +215,82 @@ public sealed partial class TrainViewModel : PageViewModel
     partial void OnMaxStepsChanged(int value) => OnPropertyChanged(nameof(Progress));
     partial void OnSaveEveryChanged(int? value) => OnPropertyChanged(nameof(CheckpointWarning));
     partial void OnNameChanged(string value) => RefreshResumeState();
+    partial void OnDatasetChanged(string value) => _ = RefreshImageCountAsync();
+    partial void OnModelChanged(string value) => Recommend();
+    partial void OnLoraKindChanged(string value) => Recommend();
+    partial void OnStepsChanged(int? value) => LengthChanged();
+    partial void OnEpochsChanged(int? value) => LengthChanged();
+    partial void OnRepeatsChanged(int? value) => LengthChanged();
+    partial void OnBatchSizeChanged(int? value) => LengthChanged();
+
+    partial void OnImageCountChanged(int value)
+    {
+        Recommend();
+        LengthChanged();
+    }
+
+    /// <summary>Carries the run length across, so switching the unit does not change the run.</summary>
+    partial void OnLengthUnitChanged(string? oldValue, string newValue)
+    {
+        if (oldValue is not null && StepsPerEpoch > 0)
+        {
+            if (ByEpochs && Steps is { } steps)
+                Epochs = Recommender.EpochsForSteps(steps, ImageCount, Repeats ?? 1, BatchSize ?? 1);
+            else if (!ByEpochs && Epochs is { } epochs)
+                Steps = Recommender.StepsForEpochs(epochs, ImageCount, Repeats ?? 1, BatchSize ?? 1);
+        }
+        OnPropertyChanged(nameof(ByEpochs));
+        LengthChanged();
+    }
+
+    private void LengthChanged()
+    {
+        OnPropertyChanged(nameof(EffectiveSteps));
+        OnPropertyChanged(nameof(LengthSummary));
+    }
+
+    /// <summary>
+    /// Counts the images off the UI thread: the folder is re-read on every keystroke in the
+    /// path box, and a half-typed path can be the root of a very large tree.
+    /// </summary>
+    internal async Task RefreshImageCountAsync()
+    {
+        var version = ++_countVersion;
+        var root = Dataset.Trim();
+        var count = root.Length == 0 ? 0 : await Task.Run(() => Loralei.Core.Data.DatasetScanner.CountImages(root));
+        if (version == _countVersion) ImageCount = count;
+    }
+
+    private void Recommend() => Apply(Recommender.For(Model, LoraKind, ImageCount), overwrite: false);
+
+    /// <summary>Puts every recommended value back, including the ones edited by hand since.</summary>
+    [RelayCommand]
+    private void ApplyRecommended() => Apply(Recommender.For(Model, LoraKind, ImageCount), overwrite: true);
+
+    /// <summary>
+    /// Moves the form to a new recommendation. A field follows along only while it is empty or
+    /// still holds what the last recommendation put there, so re-counting the dataset or
+    /// switching the model never undoes something typed by hand.
+    /// </summary>
+    private void Apply(Recommendation next, bool overwrite)
+    {
+        T? Pick<T>(T? current, T? previous, T? value) where T : struct =>
+            overwrite || current is null || Nullable.Equals(current, previous) ? value : current;
+
+        var previous = _applied;
+        _applied = next;
+
+        BatchSize = Pick(BatchSize, previous.BatchSize, next.BatchSize);
+        Repeats = Pick(Repeats, previous.Repeats, next.Repeats);
+        Rank = Pick(Rank, previous.Rank, next.Rank);
+        LearningRate = Pick(LearningRate, previous.LearningRate, next.LearningRate);
+        Steps = Pick(Steps, previous.Steps, next.Steps);
+        Epochs = Pick(Epochs, previous.Epochs, next.Epochs);
+        WarmupSteps = Pick(WarmupSteps, previous.WarmupSteps, next.WarmupSteps);
+        SaveEvery = Pick(SaveEvery, previous.SaveEvery, next.SaveEvery);
+        CaptionDropout = Pick(CaptionDropout, previous.CaptionDropout, next.CaptionDropout);
+        RecommendationSummary = next.Summary;
+    }
 
     private TrainRequest Build()
     {
@@ -184,7 +299,7 @@ public sealed partial class TrainViewModel : PageViewModel
         _request.Model = Model;
         _request.Profile = Profile;
         _request.Rank = Rank;
-        _request.Steps = Steps;
+        _request.Steps = EffectiveSteps;
         _request.Resolution = Resolution;
         _request.LearningRate = LearningRate;
         _request.BatchSize = BatchSize;
@@ -280,6 +395,8 @@ public sealed partial class TrainViewModel : PageViewModel
         Clear();
         request = Build();
         var errors = request.Validate();
+        if (ByEpochs && Epochs is not null && EffectiveSteps is null)
+            errors = [.. errors, "Epochs cannot be turned into steps: no images were found in the dataset folder."];
         if (errors.Count > 0)
         {
             Error = string.Join('\n', errors);
@@ -352,7 +469,7 @@ public sealed partial class TrainViewModel : PageViewModel
     private void BeginLiveView(TrainRequest request, bool resume)
     {
         Step = 0;
-        MaxSteps = Steps ?? 0;
+        MaxSteps = request.Steps ?? 0;
         Loss = 0;
         VramGib = 0;
         Eta = "";
@@ -450,6 +567,9 @@ public sealed partial class TrainViewModel : PageViewModel
     /// <summary>Repopulates the whole form from a run that already happened.</summary>
     public void LoadFrom(TrainRequest request)
     {
+        // A finished run is loaded as it ran: nothing recommended, and its length in steps.
+        LoraKind = Recommender.Custom;
+        LengthUnit = StepsUnit;
         Name = request.Name;
         Dataset = request.Dataset;
         Model = request.Model ?? Loralei.Core.Models.ModelRegistry.DefaultKey;

@@ -62,8 +62,15 @@ public class CaptionPageTests
 
         Assert.Equal(2, endpoint.Bodies.Count);
         Assert.All(endpoint.Bodies, body => Assert.Contains("The cube is called Bob.", body));
-        Assert.Contains(shell.Log.Lines, line => line.Contains(" OK ") && line.EndsWith("a.png"));
-        Assert.Contains(shell.Log.Lines, line => line.Contains(" SKIP ") && line.Contains("caption exists"));
+        // The run is told on the page; the output pane gets the start and the result, not a line per image.
+        Assert.Equal("Done", page.Phase);
+        Assert.Equal(1.0, page.Fraction);
+        Assert.Empty(page.InFlight);
+        Assert.False(page.IsRunning);
+        Assert.NotNull(page.LastThumbnail);
+        Assert.Contains(shell.Log.Lines, line => line.StartsWith("$ caption: "));
+        Assert.Contains(page.Status, shell.Log.Lines);
+        Assert.DoesNotContain(shell.Log.Lines, line => line.EndsWith(".png"));
     }
 
     [AvaloniaFact]
@@ -81,7 +88,7 @@ public class CaptionPageTests
         Assert.Empty(endpoint.Bodies);
         Assert.Empty(Directory.GetFiles(dataset, "*.txt"));
         Assert.Equal("2 of 2 image(s) would be captioned; 0 skipped. Nothing was sent.", page.Status);
-        Assert.Contains(shell.Log.Lines, line => line.Contains(" TODO ") && line.EndsWith("a.png"));
+        Assert.Equal(["a.png", "b.png"], page.Pending);
     }
 
     [AvaloniaFact]
@@ -98,6 +105,7 @@ public class CaptionPageTests
 
         Assert.Equal(1, page.Failed);
         Assert.Contains("no vision here", Assert.Single(page.Failures));
+        Assert.Contains(shell.Log.Lines, line => line.Contains(" FAIL ") && line.Contains("no vision here"));
         Assert.Equal("Done. Captioned 0, skipped 0, failed 1.", page.Status);
     }
 

@@ -23,6 +23,9 @@ public enum ItemStatus
 
     /// <summary>A transient failure is being retried; the image will report again.</summary>
     Retrying,
+
+    /// <summary>A request for the image is about to be sent; the image will report again.</summary>
+    Started,
 }
 
 /// <summary>
@@ -46,6 +49,7 @@ public sealed record ProcessingEvent(
         ItemStatus.Ok => "OK",
         ItemStatus.Skipped => "SKIP",
         ItemStatus.Failed => "FAIL",
+        ItemStatus.Started => "START",
         _ => "RETRY",
     };
 }
@@ -103,6 +107,7 @@ public sealed class DatasetProcessor(
         {
             try
             {
+                report(new(item.Index, total, ItemStatus.Started, item.Image));
                 var raw = await CaptionWithRetryAsync(item.Index, total, item.Image, token);
                 var caption = PromptBuilder.PostProcess(raw, settings.TriggerWord);
                 await WriteAtomicAsync(item.Target, caption, token);

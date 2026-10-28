@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Loralei.Gui.ViewModels"
              xmlns:controls="using:Loralei.Gui.Controls"
+             xmlns:gui="using:Loralei.Gui"
              xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              x:Class="Loralei.Gui.Views.CaptionView"
              x:DataType="vm:CaptionViewModel">
@@ -27,9 +28,91 @@
           <TextBlock Text="Preview" VerticalAlignment="Center" />
         </StackPanel>
       </Button>
+      <Button Command="{Binding Shell.CancelCommand}" IsVisible="{Binding IsRunning}">
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <icons:MaterialIcon Kind="StopCircle" Width="15" Height="15" VerticalAlignment="Center" />
+          <TextBlock Text="Stop" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
       <CheckBox Content="Overwrite existing captions" IsChecked="{Binding Overwrite}"
                 ToolTip.Tip="Off, an image that already has a .txt is skipped." />
     </StackPanel>
+
+    <!-- The run, as it happens. Shown right under the buttons that start it. -->
+    <Border Classes="panel" IsVisible="{Binding HasProgress}">
+      <StackPanel Spacing="8">
+        <Grid ColumnDefinitions="*,Auto">
+          <TextBlock Grid.Column="0" FontWeight="SemiBold" Text="{Binding Phase}" />
+          <TextBlock Grid.Column="1" Classes="mono"
+                     Text="{Binding Fraction, Converter={x:Static gui:Converters.Percent}}" />
+        </Grid>
+
+        <ProgressBar Minimum="0" Maximum="1" Value="{Binding Fraction}" Height="8" />
+
+        <WrapPanel>
+          <StackPanel Classes="field" MinWidth="110">
+            <TextBlock Classes="fieldLabel" Text="images" />
+            <TextBlock Classes="mono">
+              <Run Text="{Binding Done}" /><Run Text=" / " /><Run Text="{Binding Total}" />
+            </TextBlock>
+          </StackPanel>
+          <StackPanel Classes="field" MinWidth="110">
+            <TextBlock Classes="fieldLabel" Text="captioned" />
+            <TextBlock Classes="mono" Text="{Binding Succeeded}" />
+          </StackPanel>
+          <StackPanel Classes="field" MinWidth="110">
+            <TextBlock Classes="fieldLabel" Text="skipped" />
+            <TextBlock Classes="mono" Text="{Binding Skipped}" />
+          </StackPanel>
+          <StackPanel Classes="field" MinWidth="110">
+            <TextBlock Classes="fieldLabel" Text="failed" />
+            <TextBlock Classes="mono" Text="{Binding Failed}" />
+          </StackPanel>
+          <StackPanel Classes="field" MinWidth="110">
+            <TextBlock Classes="fieldLabel" Text="elapsed" />
+            <TextBlock Classes="mono" Text="{Binding Elapsed}" />
+          </StackPanel>
+          <StackPanel Classes="field" MinWidth="110">
+            <TextBlock Classes="fieldLabel" Text="eta" />
+            <TextBlock Classes="mono" Text="{Binding Eta}" />
+          </StackPanel>
+        </WrapPanel>
+
+        <StackPanel IsVisible="{Binding InFlight.Count}">
+          <TextBlock Classes="fieldLabel" Text="working on" />
+          <ItemsControl ItemsSource="{Binding InFlight}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <TextBlock Classes="mono" Text="{Binding}" TextTrimming="CharacterEllipsis" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+
+        <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding HasLastCaption}">
+          <Image Grid.Column="0" Source="{Binding LastThumbnail}" Height="120" Stretch="Uniform"
+                 Margin="0,0,12,0" VerticalAlignment="Top"
+                 IsVisible="{Binding LastThumbnail, Converter={x:Static ObjectConverters.IsNotNull}}" />
+          <StackPanel Grid.Column="1">
+            <TextBlock Classes="fieldLabel" Text="{Binding LastImage, StringFormat='latest caption: {0}'}" />
+            <SelectableTextBlock Text="{Binding LastCaption}" TextWrapping="Wrap" />
+          </StackPanel>
+        </Grid>
+
+        <StackPanel IsVisible="{Binding Pending.Count}">
+          <TextBlock Classes="fieldLabel" Text="would be captioned" />
+          <ScrollViewer MaxHeight="220">
+            <ItemsControl ItemsSource="{Binding Pending}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <TextBlock Classes="mono" Text="{Binding}" />
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+        </StackPanel>
+      </StackPanel>
+    </Border>
 
     <Border Classes="panel">
       <StackPanel>
@@ -101,22 +184,6 @@
                        VerticalAlignment="Bottom" />
           </DockPanel>
           <TextBox Text="{Binding SystemPrompt}" AcceptsReturn="True" TextWrapping="Wrap" Height="150" />
-        </StackPanel>
-      </StackPanel>
-    </Border>
-
-    <Border Classes="panel" IsVisible="{Binding HasProgress}">
-      <StackPanel Spacing="6">
-        <ProgressBar Minimum="0" Maximum="{Binding Total}" Value="{Binding Done}" Height="6" />
-        <TextBlock Classes="mono">
-          <Run Text="{Binding Done}" /><Run Text=" / " /><Run Text="{Binding Total}" />
-          <Run Text="   captioned " /><Run Text="{Binding Succeeded}" />
-          <Run Text="   skipped " /><Run Text="{Binding Skipped}" />
-          <Run Text="   failed " /><Run Text="{Binding Failed}" />
-        </TextBlock>
-        <StackPanel IsVisible="{Binding HasLastCaption}" Margin="0,6,0,0">
-          <TextBlock Classes="fieldLabel" Text="{Binding LastImage, StringFormat='Latest caption: {0}'}" />
-          <SelectableTextBlock Text="{Binding LastCaption}" TextWrapping="Wrap" />
         </StackPanel>
       </StackPanel>
     </Border>

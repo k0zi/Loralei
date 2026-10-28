@@ -64,6 +64,24 @@ public sealed partial class DoctorViewModel(MainWindowViewModel shell) : PageVie
         });
     }
 
+    /// <summary>
+    /// Sets up the worker's Python environment, then runs the checks against it. Only ever on
+    /// a click: it is the one thing on this page that goes online, and it downloads gigabytes.
+    /// </summary>
+    [RelayCommand]
+    private async Task Install()
+    {
+        Clear();
+        var installed = false;
+        await Shell.RunExclusiveAsync("doctor --install", async ct =>
+        {
+            var result = await Shell.Client.DoctorInstallAsync(
+                Shell.Sink(Shell.Client.Preview(Loralei.Core.CommandBuilder.DoctorInstall())), ct);
+            installed = Report(result, "Worker installed.");
+        });
+        if (installed) await Run();
+    }
+
     [RelayCommand]
     private async Task ShowFix()
     {

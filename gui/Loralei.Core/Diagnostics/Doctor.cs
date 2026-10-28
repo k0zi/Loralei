@@ -44,7 +44,8 @@ public static partial class Doctor
         if (!reported.TryGetValue("torch", out var torch))
             torch = Check("torch", "fail",
                 result.Error ?? $"the Python worker exited with code {result.ExitCode} before reporting",
-                "check that LORALEI_PYTHON (or the project .venv) points at the environment torch is installed in");
+                "`loralei doctor --install` sets the worker up; if it is installed, check that " +
+                "LORALEI_PYTHON (or the project .venv) points at its environment");
         checks.Add(torch);
 
         if (torch.Status != "fail")

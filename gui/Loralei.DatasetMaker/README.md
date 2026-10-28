@@ -7,7 +7,9 @@ leírásokat kér (Z-Image, Qwen-Image, LTX).
 
 Parancssori eszközként indult; ide könyvtárként került be. Nincs saját `Main`-je és nem ír a konzolra:
 a felülete a `Loralei.Gui/ViewModels/CaptionViewModel.cs` + `Views/CaptionView.axaml`, a korábbi
-konzolsorok pedig `ProcessingEvent`-ként érkeznek, és a GUI közös kimeneti paneljére kerülnek.
+konzolsorok pedig `ProcessingEvent`-ként érkeznek. A futás a GUI folyamatán belül megy, és az oldalon
+látszik: haladásjelző, számlálók, eltelt/hátralévő idő, az éppen feldolgozott képek és a legutóbbi
+leírás a kép bélyegképével. A közös kimeneti panelre csak az indítás, a hibák és az eredmény kerül.
 
 ## Használat
 

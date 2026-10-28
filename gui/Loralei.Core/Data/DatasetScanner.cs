@@ -152,6 +152,15 @@ public static class DatasetScanner
         return result;
     }
 
+    /// <summary>
+    /// How many images are under the root, by suffix alone. Cheap enough to run as a path is
+    /// typed, at the price of also counting what <see cref="Scan"/> would reject.
+    /// </summary>
+    public static int CountImages(string root, bool recursive = true) =>
+        Directory.Exists(root)
+            ? Files(root, recursive).Count(p => ImageSuffixes.Contains(Suffix(p).ToLowerInvariant()))
+            : 0;
+
     /// <summary>Regular files under the root. Linked directories are not descended into; linked files count.</summary>
     private static List<string> Files(string root, bool recursive)
     {

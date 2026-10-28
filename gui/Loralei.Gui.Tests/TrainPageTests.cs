@@ -81,6 +81,93 @@ public class TrainPageTests
     }
 
     [AvaloniaFact]
+    public async Task ChoosingALoraTypeFillsInTheRecommendedSettings()
+    {
+        using var workspace = Workspace();
+        var shell = new MainWindowViewModel();
+        var train = shell.Pages.OfType<TrainViewModel>().Single();
+        var dataset = TinyDataset();
+        try
+        {
+            train.Dataset = dataset;
+            await train.RefreshImageCountAsync();
+            Assert.Equal(4, train.ImageCount);
+            Assert.Null(train.Rank);
+
+            train.LoraKind = Recommender.Character;
+            Assert.Equal(16, train.Rank);
+            Assert.Equal(1000, train.Steps);
+            Assert.Equal(250, train.Epochs);
+
+            // A value typed by hand survives the next recommendation; the rest follow it.
+            train.LearningRate = 3e-4;
+            train.LoraKind = Recommender.Style;
+            Assert.Equal(32, train.Rank);
+            Assert.Equal(1500, train.Steps);
+            Assert.Equal(3e-4, train.LearningRate);
+
+            train.ApplyRecommendedCommand.Execute(null);
+            Assert.NotEqual(3e-4, train.LearningRate);
+
+            // Back to custom clears what was recommended, so the preset decides again.
+            train.LoraKind = Recommender.Custom;
+            Assert.Null(train.Rank);
+            Assert.Null(train.Steps);
+        }
+        finally { Discard(dataset); }
+    }
+
+    [AvaloniaFact]
+    public async Task EpochsAreTurnedIntoStepsForTheCommand()
+    {
+        using var workspace = Workspace();
+        var shell = new MainWindowViewModel();
+        var train = shell.Pages.OfType<TrainViewModel>().Single();
+        var dataset = TinyDataset();
+        try
+        {
+            train.Dataset = dataset;
+            train.Name = "epochs";
+            await train.RefreshImageCountAsync();
+
+            train.Steps = 40;
+            train.LengthUnit = "Epochs";
+            Assert.Equal(10, train.Epochs);          // the length carries over with the unit
+
+            train.Epochs = 25;
+            train.RefreshPreviewCommand.Execute(null);
+            Assert.Contains("--steps 100", train.CommandPreview);
+
+            train.BatchSize = 2;
+            train.RefreshPreviewCommand.Execute(null);
+            Assert.Contains("--steps 50", train.CommandPreview);
+        }
+        finally { Discard(dataset); }
+    }
+
+    [AvaloniaFact]
+    public async Task EpochsWithoutImagesAreRefusedRatherThanGuessed()
+    {
+        using var workspace = Workspace();
+        var shell = new MainWindowViewModel();
+        var train = shell.Pages.OfType<TrainViewModel>().Single();
+        var empty = Directory.CreateTempSubdirectory("loralei-gui-empty").FullName;
+        try
+        {
+            train.Dataset = empty;
+            train.Name = "no-images";
+            await train.RefreshImageCountAsync();
+            train.LengthUnit = "Epochs";
+            train.Epochs = 10;
+            train.DryRunCommand.Execute(null);
+
+            Assert.Contains("no images were found", train.Error);
+            Assert.False(shell.IsBusy);
+        }
+        finally { Discard(empty); }
+    }
+
+    [AvaloniaFact]
     public void ValidationErrorsSurfaceBeforeAnythingIsSpawned()
     {
         using var workspace = Workspace();

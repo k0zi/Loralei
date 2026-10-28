@@ -18,6 +18,14 @@
       </Button>
       <CheckBox Content="Thorough (longer benchmarks and torture tests)"
                 IsChecked="{Binding Thorough}" VerticalAlignment="Center" />
+      <Button  Command="{Binding InstallCommand}"
+              IsEnabled="{Binding !Shell.IsBusy}"
+              ToolTip.Tip="Creates .venv in the checkout and installs ROCm torch and the loralei worker into it. Downloads several GB from download.pytorch.org and PyPI." >
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <icons:MaterialIcon Kind="Download" Width="15" Height="15" VerticalAlignment="Center" />
+          <TextBlock Text="Install worker" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
       <Button  Command="{Binding ShowFixCommand}"
               IsEnabled="{Binding !Shell.IsBusy}" >
         <StackPanel Orientation="Horizontal" Spacing="6">

@@ -74,6 +74,10 @@ public sealed class LoraleiClient
         return string.Join('\n', lines);
     }
 
+    public Task<LoraleiResult> DoctorInstallAsync(Action<ConsoleLine>? onOutput = null,
+        CancellationToken ct = default) =>
+        _process.RunAsync(CommandBuilder.DoctorInstall(), onOutput, forceColor: false, ct);
+
     private static string Gib(long bytes) =>
         (bytes / (1024.0 * 1024 * 1024)).ToString("F1", System.Globalization.CultureInfo.InvariantCulture) + " GiB";
 

@@ -21,6 +21,34 @@
       </StackPanel>
     </WrapPanel>
 
+    <!-- What is being trained decides the starting values; every field stays editable. -->
+    <Border Classes="panel">
+      <StackPanel Spacing="6">
+        <WrapPanel>
+          <StackPanel Classes="field">
+            <TextBlock Classes="fieldLabel" Text="LoRA type" />
+            <ComboBox ItemsSource="{Binding LoraKindOptions}" SelectedItem="{Binding LoraKind}" MinWidth="150" />
+          </StackPanel>
+          <StackPanel Classes="field">
+            <TextBlock Classes="fieldLabel" Text="Images in the dataset" />
+            <TextBlock Classes="mono" Text="{Binding ImageCount}" Margin="0,7,0,0" />
+          </StackPanel>
+          <Button Command="{Binding ApplyRecommendedCommand}" VerticalAlignment="Center"
+                  IsVisible="{Binding RecommendationSummary, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                  ToolTip.Tip="Put every recommended value back, including the ones edited by hand">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <icons:MaterialIcon Kind="AutoFix" Width="15" Height="15" VerticalAlignment="Center" />
+              <TextBlock Text="Reset to recommended" VerticalAlignment="Center" />
+            </StackPanel>
+          </Button>
+        </WrapPanel>
+        <TextBlock Classes="subtle" Text="{Binding RecommendationSummary}"
+                   IsVisible="{Binding RecommendationSummary, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+        <TextBlock Classes="subtle"
+                   Text="style or character fills in rank, learning rate, run length, warmup, checkpoints and caption dropout from the model and the image count. Memory settings and the timestep schedule stay with the preset and profile. These are starting points, not measured values." />
+      </StackPanel>
+    </Border>
+
     <TabControl>
       <TabItem Header="Basic">
         <WrapPanel Margin="0,10,0,0">
@@ -37,8 +65,16 @@
             <TextBox Text="{Binding Rank}" PlaceholderText="preset" />
           </StackPanel>
           <StackPanel Classes="field">
-            <TextBlock Classes="fieldLabel" Text="Steps" />
-            <TextBox Text="{Binding Steps}" PlaceholderText="preset" />
+            <TextBlock Classes="fieldLabel" Text="Run length" />
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <TextBox Text="{Binding Steps}" PlaceholderText="preset" MinWidth="90"
+                       IsVisible="{Binding !ByEpochs}" />
+              <TextBox Text="{Binding Epochs}" PlaceholderText="preset" MinWidth="90"
+                       IsVisible="{Binding ByEpochs}" />
+              <ComboBox ItemsSource="{Binding LengthUnitOptions}" SelectedItem="{Binding LengthUnit}" MinWidth="100" />
+            </StackPanel>
+            <TextBlock Classes="subtle" FontSize="12" Text="{Binding LengthSummary}"
+                       IsVisible="{Binding LengthSummary, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
           </StackPanel>
           <StackPanel Classes="field">
             <TextBlock Classes="fieldLabel" Text="Resolution (multiple of 16)" />

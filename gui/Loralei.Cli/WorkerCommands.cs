@@ -59,8 +59,9 @@ public static class WorkerCommands
 
     public static async Task<int> Doctor(IReadOnlyList<string> argv, CancellationToken ct)
     {
-        var args = LocalCommands.Parse(new OptionSet().Flag("--json").Flag("--fix").Flag("--thorough"), argv, Help.Doctor);
+        var args = LocalCommands.Parse(new OptionSet().Flag("--json").Flag("--fix").Flag("--thorough").Flag("--install"), argv, Help.Doctor);
         args.NoMoreThan(0);
+        if (args.On("--install")) return await Install(ct);
         var json = args.On("--json");
 
         var env = RocmEnvironment.Bootstrap();
@@ -93,6 +94,32 @@ public static class WorkerCommands
             Line(RocmEnvironment.FixSnippet(env));
         }
         return report.Ok ? 0 : 1;
+    }
+
+    /// <summary>Sets up the worker's Python environment; the checks are a separate run.</summary>
+    private static async Task<int> Install(CancellationToken ct)
+    {
+        var plan = WorkerInstaller.Plan();
+        Line($"installing the worker into {Bold(plan.Venv)}");
+        if (Environment.GetEnvironmentVariable("LORALEI_PYTHON") is { Length: > 0 } configured &&
+            Path.GetFullPath(configured) != plan.Python)
+            Line(Yellow($"note: LORALEI_PYTHON={configured} is set and will be used instead of this environment"));
+
+        var code = await WorkerInstaller.RunAsync(plan, step =>
+        {
+            Line();
+            Line(Bold($"== {step.Title}"));
+            Line(Dim("$ " + string.Join(' ', step.Command)));
+        }, Passthrough, ct);
+
+        Line();
+        if (code != 0)
+        {
+            Line(Red($"the install stopped with exit code {code}; fix the error above and run it again"));
+            return code;
+        }
+        Line(Green("worker installed.") + " Run `loralei doctor` to check it.");
+        return 0;
     }
 
     private static string Paint(string status, string text) => status switch

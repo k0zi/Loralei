@@ -36,7 +36,11 @@ public sealed class CaptioningTests : IDisposable
         };
         using var client = new OpenAiCaptionClient(options);
         var settings = new ProcessorSettings("Describe it.", trigger, overwrite, MaxParallel: 2, retries, dryRun);
-        var processor = new DatasetProcessor(client, settings, e => { lock (_events) _events.Add(e); });
+        var processor = new DatasetProcessor(client, settings, e =>
+        {
+            // Started only says a request is on its way; what these tests read is how each image ended.
+            if (e.Status != ItemStatus.Started) lock (_events) _events.Add(e);
+        });
         return await processor.RunAsync(_folder, TestContext.Current.CancellationToken);
     }
 

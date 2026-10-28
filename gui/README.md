@@ -65,6 +65,22 @@ load-bearing, not a nicety: an empty field means "inherit from the preset", and 
 a cleared field as a removal. Without seeding, the first save would delete settings you had
 put in that file by hand.
 
+### Recommended settings and epochs
+
+*LoRA type* on the Train page is `custom` by default, which recommends nothing. Choosing
+`style` or `character` fills in rank, learning rate, run length, warmup, checkpoint interval,
+batch size, repeats and caption dropout from the model and the number of images in the dataset
+folder (`Recommender` in `Loralei.Core`). The values are rules of thumb, not measurements.
+A field only follows a new recommendation while it is empty or still holds the last recommended
+value; *Reset to recommended* overwrites the hand-edited ones too. Memory settings and the
+timestep schedule are left to the preset and profile.
+
+*Run length* can be given in steps or in epochs. Loralei itself only takes `--steps`, so epochs
+are converted in the form: `ceil(images × repeats ÷ batch size)` steps per epoch, which is how
+the trainer counts them for a single bucket (with several buckets and a batch size above 1 it
+is a lower bound). The image count is by file suffix, so it includes files the dataset scan
+would later reject as duplicates or unreadable.
+
 ### Interrupting a run
 
 Interrupt sends **SIGINT**, not a kill. The CLI catches it and passes it on to its worker,
@@ -154,6 +170,8 @@ that no two pages share an icon.
 ## Privacy
 
 With one exception, the GUI itself opens no network connection: it spawns the CLI and reads files.
+(Two of the CLI commands it can spawn download: **Pull** on the Models page and **Install
+worker** on the Doctor page, each only when its button is pressed.)
 The exception is the **Caption** page, which is there to send images somewhere: pressing
 Caption posts every image in the chosen folder, with the prompts, to the endpoint in its Base
 URL field. That is a local model if the URL is local, and a third party if it is not. Nothing

@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -16,7 +17,8 @@ namespace Loralei.Gui.ViewModels;
 /// image in a folder, by asking a vision model behind an OpenAI-compatible endpoint.
 /// <para>
 /// Loralei.DatasetMaker was a command-line tool. Its arguments and its <c>appsettings.json</c> are the
-/// fields of this page, and what it printed goes to the shared output pane.
+/// fields of this page. It runs inside the GUI, and its progress is shown on the page: the
+/// shared output pane only gets the start, the failures and the result.
 /// </para>
 /// <para>
 /// This is the one page that talks to a network endpoint itself. It takes the command lock
@@ -36,11 +38,19 @@ public sealed partial class CaptionViewModel : PageViewModel
 
     private readonly ConfigStore _store = new(SettingsPath);
     private bool _dirty;
+    private DispatcherTimer? _clock;
+    private DateTimeOffset _startedAt;
 
     public string[] ImageDetailOptions { get; } = ["high", "low", "auto"];
 
     /// <summary>Images that failed in the last run, with the reason.</summary>
     public ObservableCollection<string> Failures { get; } = [];
+
+    /// <summary>Images with a request out right now; as many as there are parallel requests.</summary>
+    public ObservableCollection<string> InFlight { get; } = [];
+
+    /// <summary>What a preview found to caption.</summary>
+    public ObservableCollection<string> Pending { get; } = [];
 
     [ObservableProperty] private string _dataset = "";
 
@@ -64,15 +74,21 @@ public sealed partial class CaptionViewModel : PageViewModel
     [ObservableProperty] private int _maxRetries;
 
     // The run.
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasProgress))] private int _total;
-    [ObservableProperty] private int _done;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasProgress), nameof(Fraction))] private int _total;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(Fraction))] private int _done;
     [ObservableProperty] private int _succeeded;
     [ObservableProperty] private int _skipped;
     [ObservableProperty] private int _failed;
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasLastCaption))] private string? _lastCaption;
     [ObservableProperty] private string? _lastImage;
+    [ObservableProperty] private Bitmap? _lastThumbnail;
+    [ObservableProperty] private string _phase = "";
+    [ObservableProperty] private string _elapsed = "";
+    [ObservableProperty] private string _eta = "";
+    [ObservableProperty] private bool _isRunning;
 
     public bool HasProgress => Total > 0;
+    public double Fraction => Total > 0 ? Math.Clamp((double)Done / Total, 0, 1) : 0;
     public bool HasLastCaption => !string.IsNullOrEmpty(LastCaption);
 
     public CaptionViewModel(MainWindowViewModel shell) : base(shell)
@@ -188,32 +204,45 @@ public sealed partial class CaptionViewModel : PageViewModel
             Shell.Log.AppendCommand(dryRun
                 ? $"caption preview: {directory}"
                 : $"caption: {directory}  endpoint: {endpoint.BaseUrl}  model: {endpoint.Model}");
-            Status = dryRun ? "Scanning..." : "Captioning...";
+            Phase = dryRun ? "Scanning" : "Captioning";
+            StartClock();
 
             try
             {
                 using var client = new OpenAiCaptionClient(endpoint);
                 // Events come from the worker threads; the page and the log belong to this one.
-                var processor = new DatasetProcessor(client, settings,
-                    e => Dispatcher.UIThread.Post(() => OnEvent(e)));
+                // The thumbnail is decoded out there too, so a large image never stalls the page.
+                var processor = new DatasetProcessor(client, settings, e =>
+                {
+                    var thumbnail = e.Status == ItemStatus.Ok ? Thumbnail(e.Image) : null;
+                    Dispatcher.UIThread.Post(() => OnEvent(e, directory, thumbnail));
+                });
 
                 var summary = await Task.Run(() => processor.RunAsync(directory, ct), ct);
                 await DrainEventsAsync();
 
                 Total = summary.Total;
+                Phase = dryRun ? "Preview" : "Done";
                 Status = Describe(summary, dryRun, directory);
                 Shell.Log.AppendNote(Status);
             }
             catch (OperationCanceledException)
             {
                 await DrainEventsAsync();
+                Phase = "Cancelled";
                 Status = $"Cancelled after {Succeeded} caption(s). The ones already written are kept.";
                 Shell.Log.AppendNote(Status);
             }
             catch (Exception e) when (e is IOException or UnauthorizedAccessException)
             {
+                Phase = "";
                 Error = $"Could not read the folder: {e.Message}";
                 Status = null;
+            }
+            finally
+            {
+                StopClock();
+                InFlight.Clear();
             }
         });
     }
@@ -234,23 +263,35 @@ public sealed partial class CaptionViewModel : PageViewModel
     private void ResetProgress()
     {
         Failures.Clear();
+        InFlight.Clear();
+        Pending.Clear();
         Total = Done = Succeeded = Skipped = Failed = 0;
         LastCaption = LastImage = null;
+        LastThumbnail = null;
+        Elapsed = Eta = "";
     }
 
-    private void OnEvent(ProcessingEvent e)
+    private void OnEvent(ProcessingEvent e, string directory, Bitmap? thumbnail)
     {
-        Shell.Log.AppendNote(e.ToString());
+        var name = Path.GetRelativePath(directory, e.Image);
         Total = e.Total;
 
         switch (e.Status)
         {
-            case ItemStatus.Retrying:
+            case ItemStatus.Started:
+                InFlight.Add(name);
                 return; // not finished; it reports again
+            case ItemStatus.Retrying:
+                Shell.Log.AppendNote(e.ToString());
+                return;
+            case ItemStatus.Todo:
+                Pending.Add(name);
+                break;
             case ItemStatus.Ok:
                 Succeeded++;
-                LastImage = Path.GetFileName(e.Image);
+                LastImage = name;
                 LastCaption = e.Caption;
+                LastThumbnail = thumbnail;
                 break;
             case ItemStatus.Skipped:
                 Skipped++;
@@ -258,10 +299,60 @@ public sealed partial class CaptionViewModel : PageViewModel
             case ItemStatus.Failed:
                 Failed++;
                 Failures.Add($"{e.Image}: {e.Detail}");
+                Shell.Log.AppendNote(e.ToString());
                 break;
         }
+        InFlight.Remove(name);
         Done++;
+        Tick();
     }
+
+    /// <summary>A small copy for the page, or null for a format Avalonia cannot decode.</summary>
+    private static Bitmap? Thumbnail(string image)
+    {
+        try
+        {
+            using var stream = File.OpenRead(image);
+            return Bitmap.DecodeToHeight(stream, 160);
+        }
+        catch (Exception) { return null; }
+    }
+
+    private void StartClock()
+    {
+        _startedAt = DateTimeOffset.Now;
+        IsRunning = true;
+        _clock = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        _clock.Tick += (_, _) => Tick();
+        _clock.Start();
+    }
+
+    private void StopClock()
+    {
+        _clock?.Stop();
+        _clock = null;
+        IsRunning = false;
+        Eta = "";
+    }
+
+    /// <summary>
+    /// The estimate counts only images that went to the endpoint: a skipped one costs nothing,
+    /// and a folder that is mostly captioned already would otherwise promise to finish at once.
+    /// </summary>
+    private void Tick()
+    {
+        if (!IsRunning) return;
+        var elapsed = DateTimeOffset.Now - _startedAt;
+        Elapsed = Format(elapsed);
+
+        var sent = Succeeded + Failed;
+        var left = Total - Done;
+        Eta = sent > 0 && left > 0 ? Format(elapsed * ((double)left / sent)) : "";
+    }
+
+    private static string Format(TimeSpan span) => span.TotalHours >= 1
+        ? $"{(int)span.TotalHours}h {span.Minutes:00}m"
+        : $"{span.Minutes:00}m {span.Seconds:00}s";
 
     /// <summary>
     /// Waits for the events already posted. They queue at the same priority as this, so by

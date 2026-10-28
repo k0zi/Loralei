@@ -14,5 +14,6 @@ public static class LoraleiVocabulary
     public static readonly string[] LrSchedulers = ["constant_with_warmup", "constant", "cosine", "linear"];
     public static readonly string[] Dtypes = ["bf16", "fp32"];
     public static readonly string[] VaeDevices = ["cpu", "cuda"];
+    public static readonly string[] LoraKinds = [Recommender.Custom, Recommender.Style, Recommender.Character];
     public static readonly string[] ExportFormats = ["both", "comfyui", "diffusers"];
 }

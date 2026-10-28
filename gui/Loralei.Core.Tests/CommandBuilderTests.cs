@@ -83,6 +83,12 @@ public class CommandBuilderTests
     }
 
     [Fact]
+    public void DoctorInstallIsItsOwnCommand()
+    {
+        Assert.Equal(["doctor", "--install"], CommandBuilder.DoctorInstall());
+    }
+
+    [Fact]
     public void RunsRmAlwaysSkipsTheInteractiveConfirmation()
     {
         Assert.Contains("--yes", CommandBuilder.RunsRm("smoke"));

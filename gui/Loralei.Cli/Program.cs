@@ -99,7 +99,10 @@ namespace Loralei.Cli
             `loralei <command> --help` lists a command's options. --version prints the version.
             """;
 
-        public const string Doctor = "usage: loralei doctor [--json] [--fix] [--thorough]";
+        public const string Doctor = """
+            usage: loralei doctor [--json] [--fix] [--thorough]
+                   loralei doctor --install     set up the Python worker: .venv, ROCm torch, loralei
+            """;
 
         public const string Models = """
             usage: loralei models ls   [--models-dir PATH] [--model-path PATH] [--json]

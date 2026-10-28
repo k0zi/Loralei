@@ -15,6 +15,8 @@ public static class CommandBuilder
         return a;
     }
 
+    public static List<string> DoctorInstall() => ["doctor", "--install"];
+
     /// <param name="json">The typed form the GUI reads; without it the same data is a table.</param>
     public static List<string> ModelsLs(IReadOnlyList<string>? modelsDir = null, string? modelPath = null,
         bool json = false)

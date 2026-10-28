@@ -89,6 +89,8 @@ uv pip install --index-url https://download.pytorch.org/whl/rocm7.1 \
     torch==2.13.0+rocm7.1 torchvision==0.28.0+rocm7.1
 uv pip install -e .
 uv pip install bitsandbytes          # optional: 8-bit Adam
+# ...or let loralei run those four for you, once the CLI below is built:
+#   loralei doctor --install         (the GUI's Doctor page has it as "Install worker")
 
 # your settings: loralei.yaml is yours and ignored by git
 cp loralei.example.yaml loralei.yaml
@@ -184,6 +186,11 @@ their architectures, the SDPA backend (the important one - see ROCm notes), bf16
 the environment variables; it never changes anything itself. A check that takes the worker
 process down with it - a driver abort inside a matmul - is reported as that check failing,
 not as a missing table.
+
+`loralei doctor --install` sets the worker up instead of checking it: it creates `.venv` in
+the checkout (kept if it is already there), installs the pinned ROCm torch into it, then the
+worker with bitsandbytes. It uses `uv`, or `python3.12 -m venv` and pip when `uv` is not on
+`PATH`, prints each command before running it, and stops at the first one that fails.
 
 ### `loralei models ls` / `pull <model>...` / `gc`
 `ls` shows each model, whether it can be trained on or only downloaded, whether its weights
@@ -327,9 +334,10 @@ schedule shift at 1024x1024; the memory settings are sized from the weights.
 
 ## Offline
 
-loralei runs fully offline. `loralei models pull` is the only command that opens a network
-connection, and only while it downloads - and it is the CLI that does it, talking to the
-Hugging Face Hub directly (`HF_ENDPOINT` points it at a mirror). The Python worker never
+loralei runs fully offline once it is set up. Two commands open a network connection, and
+both only download: `loralei models pull`, where the CLI talks to the Hugging Face Hub
+directly (`HF_ENDPOINT` points it at a mirror), and `loralei doctor --install`, where uv or
+pip fetch the worker's packages from download.pytorch.org and PyPI. The Python worker never
 downloads anything.
 
 The worker is offline by default, not just offline in practice: the CLI starts it with
